@@ -570,7 +570,7 @@ contract StandardToken is Token {
 }
 
 contract CoinBNS is StandardToken {
-  function () {
+  function () public {
       revert();
   }
   string public name;        
