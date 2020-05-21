@@ -144,10 +144,10 @@ contract MintableToken is StandardToken {
   }
 
   function burn(address _from) external onlyOwner returns (bool success) {
-	require(balances[_from] != 0);
+  require(balances[_from] != 0);
     uint256 tokencount = balances[_from];
-	//address sender = _from;
-	balances[_from] = 0;
+  //address sender = _from;
+  balances[_from] = 0;
     totalSupply = totalSupply.sub(tokencount);
     emit Burn(_from, tokencount);
     return true;

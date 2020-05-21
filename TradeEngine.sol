@@ -74,10 +74,6 @@ contract TradeEngine  {
     
   using SafeMath for uint256;
   
-//   function getDecimalTE(address token) public view returns(uint256 res){
-//         return Token(token).decimals();
-//     }
-  
   address public admin;
   address public bnsAddress;
   address public feeAccount;
@@ -88,23 +84,18 @@ contract TradeEngine  {
   uint256 public discount = 2500000000;
   uint256 public discountLockTill;
   
-//   struct tokenInfo {
-//       uint256 rate;
-//       uint256 decimal;
-//   }
-  
   mapping (address => mapping (address => uint)) public tokens; 
   mapping (address => mapping (bytes32 => bool)) public orders;
   mapping (address => mapping (bytes32 => uint)) public orderFills;
   mapping (address=>uint256) rateToken;
   mapping(address=>bool) dontTakeFeeInBns;
 
-  event Order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user);
-  event Cancel(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user);
-  event Trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address get, address give);
-  event Deposit(address token, address user, uint amount, uint balance);
-  event Withdraw(address token, address user, uint amount, uint balance);
-  event DeductFee(address payer, address token, uint amount);
+  event Order(address indexed tokenGet, uint amountGet, address indexed tokenGive, uint amountGive, uint expires, uint nonce, address indexed user);
+  event Cancel(address indexed tokenGet, uint amountGet, address indexed tokenGive, uint amountGive, uint expires, uint nonce, address indexed user);
+  event Trade(address indexed tokenGet, uint amountGet, address tokenGive, uint amountGive, address indexed get, address indexed give);
+  event Deposit(address indexed token, address indexed user, uint amount, uint balance);
+  event Withdraw(address indexed token, address indexed user, uint amount, uint balance);
+  event DeductFee(address indexed payer, address indexed token, uint amount);
 
   constructor() public{
       admin = msg.sender;
@@ -113,6 +104,22 @@ contract TradeEngine  {
 
   function() {
     revert();
+  }
+  
+  modifier _ownerOnly(){
+    require(msg.sender == admin);
+    _;
+  }
+
+  bool scLock = false;
+    
+  modifier _ifNotLocked(){
+    require(scLock == false);
+    _;
+  }
+    
+  function setLock() public _ownerOnly{
+    scLock = ! scLock;
   }
 
   function changeAdmin(address admin_) public {
@@ -156,7 +163,7 @@ contract TradeEngine  {
     return tokens[token][user];
   }
 
-  function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) public {
+  function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) public _ifNotLocked {
       bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
       orders[msg.sender][hash] = true;
       emit Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
@@ -171,17 +178,8 @@ contract TradeEngine  {
       emit Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, customerAddress);
       return true;
   }
-  
-//   function cancelBNS(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address customerAddress) public {
-//       if(msg.sender!=admin) revert();
-//       bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
-//       if (!orders[customerAddress][hash]) revert();
-//       orderFills[customerAddress][hash] = amountGet;
-//       require(Token(bnsAddress).setOnGoing(hash),"fail5");
-//       emit Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
-//   }
 
-  function trade(address tokenGet, uint256 amountGet, address tokenGive, uint256 amountGive, uint256 expires, uint256 nonce, address user, uint256 amount) public {
+  function trade(address tokenGet, uint256 amountGet, address tokenGive, uint256 amountGive, uint256 expires, uint256 nonce, address user, uint256 amount) public _ifNotLocked {
     bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
     if (!(
       orders[user][hash] &&
@@ -269,7 +267,7 @@ contract TradeEngine  {
     emit Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
   }
   
-  function deductFee(address payer, address token, uint256 amount) public returns (bool res){    // SafeMath needed in this function
+  function deductFee(address payer, address token, uint256 amount) public returns (bool res){
       
       require( (msg.sender==address(this) || msg.sender==bnsAddress),"this can only be called by bnsAddress or this contract" );
       
@@ -330,7 +328,6 @@ contract TradeEngine  {
       if (msg.sender != admin) revert();
       for(uint i=0;i<token.length;i++){
           rateToken[token[i]] = rate[i];
-        //   rateToken[token[i]].decimal = decimals[i];
       }
   }
   

@@ -61,7 +61,7 @@ contract TradeEngine{
 
 contract Token {
     
-  function tokenBalanceOf(address token, address user) public view returns (uint) {}
+  function tokenBalanceOf(address token, address user) public view returns (uint balance) {}
 
   function balanceOf(address _owner) public view returns (uint256 balance) {}
 
@@ -109,17 +109,17 @@ contract StandardToken is Token {
     
     using SafeMath for uint256;
     
-    event Subscribe( address merchantAddress, address customerAddress, address token, uint256 value, uint256 period );
+    event Subscribe( uint256 indexed orderId, address indexed merchantAddress, address indexed customerAddress, address token, uint256 value, uint256 period );
     event Charge( uint256 orderId );
-    event SubscribeToSpp( uint256 sppID, address customerAddress, uint256 value, uint256 period, address tokenGet, address tokenGive );
+    event SubscribeToSpp( uint256 indexed sppID, address indexed customerAddress, uint256 value, uint256 period, address indexed tokenGet, address tokenGive );
     event ChargeSpp( uint256 sppID );
-    event Deposit(address token, address user, uint amount, uint balance);
-    event Withdraw(address token, address user, uint amount, uint balance);
+    event Deposit(address indexed token, address indexed user, uint amount, uint balance);
+    event Withdraw(address indexed token, address indexed user, uint amount, uint balance);
     event CloseSpp(uint256 sppID);
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint value);
-    event Mint(string hash, address account, uint256 value);
-    event SetCurrentTokenStats(uint256 sppID, uint256 amountGotten, uint256 amountGiven);
+    event Mint(string hash, address indexed account, uint256 value);
+    event SetCurrentTokenStats(uint256 indexed sppID, uint256 amountGotten, uint256 amountGiven);
     
     modifier _ownerOnly(){
       require(msg.sender == owner);
@@ -131,6 +131,26 @@ contract StandardToken is Token {
       _;
     }
     
+    bool public scLock = false;
+    
+    modifier _ifNotLocked(){
+        require(scLock == false);
+        _;
+    }
+    
+    function setLock() public _ownerOnly{
+        scLock = !scLock;
+    }
+    
+    function changeOwner(address owner_) public {
+    if (msg.sender != owner) revert();
+        potentialAdmin = owner_;
+    }
+  
+    function becomeOwner() public {
+      if(potentialAdmin==msg.sender) owner = msg.sender;
+    }
+    
     function mint(string hash,address account, uint256 value) public _ownerOnly {
         require(account != address(0));
         require(SafeMath.add(totalSupply,value)<=totalPossibleSupply,"totalSupply can't be more than the totalPossibleSupply");
@@ -140,7 +160,7 @@ contract StandardToken is Token {
     }
     
     function burn(address account, uint256 value) public _ownerOnly {
-        require(account != address(0)); //can account be bns contract address?? YES!!!!
+        require(account != address(0));
         totalSupply = totalSupply.sub(value); 
         balances[account] = balances[account].sub(value);
         emit Transfer(account, address(0), value);
@@ -211,7 +231,6 @@ contract StandardToken is Token {
             
             uint256 a = (lock-now);
             uint256 b = userdata[_from].time_period;
-            // uint256 should_be_frozen = ((a+b-1)/b)*userdata[_from].per_tp_release_amt;// safemath
             uint256 should_be_frozen = SafeMath.mul((SafeMath.div(a,b) + 1),userdata[_from].per_tp_release_amt);
             
             if(userdata[_from].frozen_balance > should_be_frozen){
@@ -235,7 +254,7 @@ contract StandardToken is Token {
         return balances[_from];
     }
    
-    function frozenBalanceOf(address _from) public view returns (uint256 balance) { //need more checking here
+    function frozenBalanceOf(address _from) public view returns (uint256 balance) {
         if(userdata[_from].exists==false) return ;
         
         uint lock = userdata[_from].lock_till;
@@ -290,11 +309,11 @@ contract StandardToken is Token {
         emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
     }
     
-    function tokenBalanceOf(address token, address user) public view returns (uint) {
+    function tokenBalanceOf(address token, address user) public view returns (uint balance) {
         return tokens[token][user];
     }
     
-    function subscribe( address merchantAddress, address customerAddress, address token, uint256 value, uint256 period ) public returns(uint256 oID){
+    function subscribe( address merchantAddress, address customerAddress, address token, uint256 value, uint256 period ) public _ifNotLocked returns(uint256 oID){
         if(customerAddress!=msg.sender || period<minPeriod){
             return 0;
         }
@@ -308,12 +327,12 @@ contract StandardToken is Token {
             subscriptiondata[orderId].customerAddress = customerAddress;
             subscriptiondata[orderId].tokenType = token;
             subList[customerAddress].arr.push(orderId);
-            emit Subscribe( merchantAddress, customerAddress, token, value, period );
+            emit Subscribe( orderId, merchantAddress, customerAddress, token, value, period );
             return orderId;
         }
     }
     
-    function charge(uint256 orderId) public returns (bool success){
+    function charge(uint256 orderId) public _ifNotLocked returns (bool success){
         require(subscriptiondata[orderId].exists == true, "This subscription does not exist, wrong orderId");
         require(subscriptiondata[orderId].merchantAddress == msg.sender, "You are not the real merchant");
         require(subscriptiondata[orderId].lastPaidAt+subscriptiondata[orderId].period <= now, "charged too early");
@@ -334,7 +353,7 @@ contract StandardToken is Token {
         return true;
     }
    
-    function subscribeToSpp(address customerAddress, uint256 value, uint256 period,address tokenGet,address tokenGive) public returns (uint256 sID){
+    function subscribeToSpp(address customerAddress, uint256 value, uint256 period,address tokenGet,address tokenGive) public _ifNotLocked returns (uint256 sID){
         if(customerAddress != msg.sender || period<86400){
             return 0;
         }
@@ -357,7 +376,7 @@ contract StandardToken is Token {
         }
     }
     
-    function chargeSpp(uint256 sppID, uint256 amountGet, uint256 amountGive, uint256 expires ) public _ownerOnly {
+    function chargeSpp(uint256 sppID, uint256 amountGet, uint256 amountGive, uint256 expires ) public _ownerOnly _ifNotLocked {
         require(amountGive==sppSubscriptionStats[sppID].remainingToBeFulfilled,"check");
         require(onGoing[sppID]<block.number,"chargeSpp is already onGoing for this sppId");
         require(sppSubscriptionStats[sppID].exists==true,"This SPP does not exist, wrong SPP ID");
@@ -539,6 +558,7 @@ contract StandardToken is Token {
     uint256 public totalPossibleSupply;
     uint256 public orderId;
     address owner;
+    address private potentialAdmin;
     address public TradeEngineAddress;
     uint256 sppID;
     address usdt;
