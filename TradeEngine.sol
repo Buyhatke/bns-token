@@ -111,7 +111,7 @@ contract TradeEngine  {
     _;
   }
 
-  bool scLock = false;
+  bool public scLock = false;
     
   modifier _ifNotLocked(){
     require(scLock == false);
