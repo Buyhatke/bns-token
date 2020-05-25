@@ -557,7 +557,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
     uint256 public totalPossibleSupply;
     uint256 public orderId;
-    address owner;
+    address public owner;
     address private potentialAdmin;
     address public TradeEngineAddress;
     uint256 sppID;
