@@ -561,12 +561,12 @@ contract StandardToken is Token {
     address private potentialAdmin;
     address public TradeEngineAddress;
     uint256 sppID;
-    address usdt;
-    uint256 usdtDecimal;
-    uint256 rateTrxUsdt;
+    address public usdt;
+    uint256 public usdtDecimal;
+    uint256 public rateTrxUsdt;
     uint256 nonce;
     address public feeAccount;
-    uint256 minPeriod;
+    uint256 public minPeriod;
 }
 
 contract CoinBNS is StandardToken {
