@@ -93,6 +93,7 @@ contract TradeEngine  {
   event Order(address indexed tokenGet, uint amountGet, address indexed tokenGive, uint amountGive, uint expires, uint nonce, address indexed user);
   event Cancel(address indexed tokenGet, uint amountGet, address indexed tokenGive, uint amountGive, uint expires, uint nonce, address indexed user);
   event Trade(address indexed tokenGet, uint amountGet, address tokenGive, uint amountGive, address indexed get, address indexed give);
+  event TradeBalancesCalled(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount);
   event Deposit(address indexed token, address indexed user, uint amount, uint balance);
   event Withdraw(address indexed token, address indexed user, uint amount, uint balance);
   event DeductFee(address indexed payer, address indexed token, uint amount);
@@ -187,6 +188,7 @@ contract TradeEngine  {
       block.number <= expires &&
       SafeMath.add(orderFills[user][hash], amount) <= amountGet
     )) revert();
+    emit TradeBalancesCalled(tokenGet, amountGet, tokenGive, amountGive, user, amount);
     tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount, hash);
     orderFills[user][hash] = SafeMath.add(orderFills[user][hash], amount);
     emit Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
