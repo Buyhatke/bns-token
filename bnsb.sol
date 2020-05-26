@@ -143,7 +143,7 @@ contract MintableToken is StandardToken {
     return true;
   }
 
-  function burn(address account, uint256 value) public _ownerOnly {
+  function burn(address account, uint256 value) onlyOwner public {
     require(account != address(0));
     totalSupply = totalSupply.sub(value); 
     balances[account] = balances[account].sub(value);
