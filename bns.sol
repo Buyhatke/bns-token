@@ -384,12 +384,13 @@ contract StandardToken is Token {
         require(sppSubscriptionStats[sppID].lastPaidAt+sppSubscriptionStats[sppID].period<=now,"Charged too early");
         require(TradeEngine(TradeEngineAddress).deductFee(sppSubscriptionStats[sppID].customerAddress, usdt, uint(2*rateTrxUsdt)),"fee unable to charge");// need to multiply with 10^8??
         nonce += 1;
+        emit ChargeSppDetails( block.number+expires, nonce );
         bytes32 hash = sha256(TradeEngineAddress, sppSubscriptionStats[sppID].tokenGet, amountGet , sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce);
         hash2sppId[hash] = sppID;
         onGoing[sppID] = block.number+expires;
         TradeEngine(TradeEngineAddress).orderBNS(sppSubscriptionStats[sppID].tokenGet, amountGet, sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce, sppSubscriptionStats[sppID].customerAddress);
         emit ChargeSpp( sppID );
-        emit ChargeSppDetails( block.number+expires, nonce );
+        
     }
     
     function closeSpp(uint256 sppID) public returns(bool success){
