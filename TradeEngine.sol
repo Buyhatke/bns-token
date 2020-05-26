@@ -209,6 +209,8 @@ contract TradeEngine  {
     
     emit DeductFeeCalled(user, tokenGet,feeTokenGet);
     require(TradeEngine(this).deductFee(user,tokenGet,feeTokenGet),"unable to charge fee 1");
+
+    emit DeductFeeCalculated(feeTokenGet,feeTokenGive);
     
     if(Token(bnsAddress).getSppIdFromHash(hash)!=0){
         if(flag==1){
@@ -222,8 +224,10 @@ contract TradeEngine  {
     
     tokens[tokenGive][user] = SafeMath.sub(tokens[tokenGive][user], satisfied);
     tokens[tokenGive][msg.sender] = SafeMath.add(tokens[tokenGive][msg.sender], satisfied);
+
+    emit DeductFeeCalculated(feeTokenGet,feeTokenGive);
     
-    emit DeductFeeCalled(user, tokenGet,feeTokenGet);
+    emit DeductFeeCalled(user, tokenGet,feeTokenGive);
     require(TradeEngine(this).deductFee(msg.sender,tokenGive,feeTokenGive),"unable to charge fee 2");
     flag = 0;
     
