@@ -69,6 +69,7 @@ contract StandardToken is Token {
     uint256 sppID;
     uint256 public totalSupply;
     address public owner;
+    address private potentialAdmin;
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
         if (balances[msg.sender] >= _value && _value>=0){
@@ -99,6 +100,15 @@ contract StandardToken is Token {
     
     function balanceOf(address _from) public view returns (uint256 balance) {
         return balances[_from];
+    }
+
+    function changeOwner(address owner_) public {
+    if (msg.sender != owner) revert();
+        potentialAdmin = owner_;
+    }
+  
+    function becomeOwner() public {
+      if(potentialAdmin==msg.sender) owner = msg.sender;
     }
     
 }

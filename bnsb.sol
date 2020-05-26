@@ -112,6 +112,7 @@ contract MintableToken is StandardToken {
   event Burn(address sender,uint256 tokencount);
 
   bool public mintingFinished = false ;
+  address private potentialAdmin;
 
   modifier canMint() {
     require(!mintingFinished);
@@ -149,6 +150,15 @@ contract MintableToken is StandardToken {
     balances[account] = balances[account].sub(value);
     emit Burn(account, value);
   }
+
+  function changeOwner(address owner_) public {
+    if (msg.sender != owner) revert();
+        potentialAdmin = owner_;
+    }
+  
+    function becomeOwner() public {
+      if(potentialAdmin==msg.sender) owner = msg.sender;
+    }
 
 }
 
