@@ -99,7 +99,7 @@ contract TradeEngine  {
   event DeductFee(address indexed payer, address indexed token, uint amount);
   event DeductFeeCalled(address indexed payer, address indexed token, uint amount);
   event DeductFeeCalculated(uint feeGet, uint feeGive);
-  event DebugFeeEvent(uint feeCalculated, address token, uint rate);
+  event DebugFeeEvent(uint feeCalculated, address token, uint rate, uint decimals);
 
   constructor() public{
       admin = msg.sender;
@@ -301,7 +301,7 @@ contract TradeEngine  {
           eqvltBNS = SafeMath.div(SafeMath.mul(amt,rateToken[token]),rateToken[bnsAddress]);
       }
 
-      emit DebugFeeEvent(eqvltBNS, token, rateToken[token]);
+      emit DebugFeeEvent(eqvltBNS, token, rateToken[token], Token(token).decimals());
       
       if(tokens[bnsAddress][payer]>=eqvltBNS && dontTakeFeeInBns[payer]!=true){
           flag = 1;
