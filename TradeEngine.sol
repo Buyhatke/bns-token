@@ -227,7 +227,7 @@ contract TradeEngine  {
 
     emit DeductFeeCalculated(feeTokenGet,feeTokenGive);
     
-    emit DeductFeeCalled(user, tokenGet,feeTokenGive);
+    emit DeductFeeCalled(msg.sender, tokenGive,feeTokenGive);
     require(TradeEngine(this).deductFee(msg.sender,tokenGive,feeTokenGive),"unable to charge fee 2");
     flag = 0;
     
