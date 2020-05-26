@@ -70,7 +70,7 @@ contract StandardToken is Token {
    
     uint256 public totalSupply;
     uint256 public totalPossibleSupply;
-    address owner;
+    address public owner;
     
     function transfer(address _to, uint256 _value) public returns (bool success) {
         if (balances[msg.sender] >= _value && _value>=0){

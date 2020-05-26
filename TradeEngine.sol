@@ -88,7 +88,7 @@ contract TradeEngine  {
   mapping (address => mapping (bytes32 => bool)) public orders;
   mapping (address => mapping (bytes32 => uint)) public orderFills;
   mapping (address=>uint256) public rateToken;
-  mapping(address=>bool) dontTakeFeeInBns;
+  mapping(address=>bool) public dontTakeFeeInBns;
 
   event Order(address indexed tokenGet, uint amountGet, address indexed tokenGive, uint amountGive, uint expires, uint nonce, address indexed user);
   event Cancel(address indexed tokenGet, uint amountGet, address indexed tokenGive, uint amountGive, uint expires, uint nonce, address indexed user);
