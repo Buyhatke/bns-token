@@ -96,6 +96,7 @@ contract TradeEngine  {
   event Deposit(address indexed token, address indexed user, uint amount, uint balance);
   event Withdraw(address indexed token, address indexed user, uint amount, uint balance);
   event DeductFee(address indexed payer, address indexed token, uint amount);
+  event DeductFeeCalled(address indexed payer, address indexed token, uint amount);
 
   constructor() public{
       admin = msg.sender;
@@ -201,6 +202,7 @@ contract TradeEngine  {
     tokens[tokenGet][msg.sender] = SafeMath.sub(tokens[tokenGet][msg.sender], amount);
     tokens[tokenGet][user] = SafeMath.add(tokens[tokenGet][user], amount);
     
+    emit DeductFeeCalled(user, tokenGet,feeTokenGet);
     require(TradeEngine(this).deductFee(user,tokenGet,feeTokenGet),"unable to charge fee 1");
     
     if(Token(bnsAddress).getSppIdFromHash(hash)!=0){
@@ -216,6 +218,7 @@ contract TradeEngine  {
     tokens[tokenGive][user] = SafeMath.sub(tokens[tokenGive][user], satisfied);
     tokens[tokenGive][msg.sender] = SafeMath.add(tokens[tokenGive][msg.sender], satisfied);
     
+    emit DeductFeeCalled(user, tokenGet,feeTokenGet);
     require(TradeEngine(this).deductFee(msg.sender,tokenGive,feeTokenGive),"unable to charge fee 2");
     flag = 0;
     
