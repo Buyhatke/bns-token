@@ -118,7 +118,7 @@ contract CoinBNSS is StandardToken {
        balances[msg.sender] = 160000000000000000;
        totalSupply = 160000000000000000;
        name = "BNSS Token";
-       decimals = 10;
+       decimals = 8;
        symbol = "BNSS";
    }
 }
