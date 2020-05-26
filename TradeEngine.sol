@@ -98,6 +98,7 @@ contract TradeEngine  {
   event Withdraw(address indexed token, address indexed user, uint amount, uint balance);
   event DeductFee(address indexed payer, address indexed token, uint amount);
   event DeductFeeCalled(address indexed payer, address indexed token, uint amount);
+  event DeductFeeCalculated(uint feeGet, uint feeGive);
 
   constructor() public{
       admin = msg.sender;
@@ -200,6 +201,8 @@ contract TradeEngine  {
     uint256 feeTokenGet = (amount*fee)/10000; 
     uint256 feeTokenGive = (satisfied*fee)/10000;
     flag = 0;
+
+    emit DeductFeeCalculated(feeTokenGet,feeTokenGive);
     
     tokens[tokenGet][msg.sender] = SafeMath.sub(tokens[tokenGet][msg.sender], amount);
     tokens[tokenGet][user] = SafeMath.add(tokens[tokenGet][user], amount);
