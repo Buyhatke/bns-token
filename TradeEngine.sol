@@ -100,7 +100,7 @@ contract TradeEngine  {
   event DeductFeeCalled(address indexed payer, address indexed token, uint amount);
   event DeductFeeCalculated(uint feeGet, uint feeGive);
   event DebugFeeEvent(uint feeCalculated, address token, uint rate, uint decimals);
-  event DebugFeeEvent2(uint feeCalculated, uint rate, uint decimals);
+  event DebugFeeEventInput(uint feeCalculated, uint rate, uint decimals);
 
   constructor() public{
       admin = msg.sender;
@@ -296,15 +296,15 @@ contract TradeEngine  {
       uint256 amt = ((amount*100000000)/(10**Token(token).decimals())); 
       
       if(token==usdt){
-          // eqvltBNS = SafeMath.div(SafeMath.mul(amt,10**Token(token).decimals()),(rateToken[bnsAddress]));
-          eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
+          eqvltBNS = SafeMath.div(SafeMath.mul(amt,10**Token(token).decimals()),(rateToken[bnsAddress]));
+          // eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
 
       }
       else{
-          emit DebugFeeEvent2(amt, rateToken[token], rateToken[bnsAddress]);
-          // eqvltBNS = SafeMath.div(SafeMath.mul(amt,rateToken[token]),rateToken[bnsAddress]);
+          emit DebugFeeEventInput(amountt, rateToken[token], rateToken[bnsAddress]);
+          eqvltBNS = SafeMath.div(SafeMath.mul(amt,rateToken[token]),rateToken[bnsAddress]);
 
-          eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
+          // eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
 
           // (( amt/10**Token(token).decimals() ) * rateToken[token] / rateToken[bnsAddress] ) * (10**Token(bnsAddress).decimals())
 
