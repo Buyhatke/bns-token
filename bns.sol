@@ -113,6 +113,7 @@ contract StandardToken is Token {
     event Charge( uint256 orderId );
     event SubscribeToSpp( uint256 indexed sppID, address indexed customerAddress, uint256 value, uint256 period, address indexed tokenGet, address tokenGive );
     event ChargeSpp( uint256 sppID );
+    event ChargeSppDetails( uint256 expires, uint nonce );
     event Deposit(address indexed token, address indexed user, uint amount, uint balance);
     event Withdraw(address indexed token, address indexed user, uint amount, uint balance);
     event CloseSpp(uint256 sppID);
@@ -388,6 +389,7 @@ contract StandardToken is Token {
         onGoing[sppID] = block.number+expires;
         TradeEngine(TradeEngineAddress).orderBNS(sppSubscriptionStats[sppID].tokenGet, amountGet, sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce, sppSubscriptionStats[sppID].customerAddress);
         emit ChargeSpp( sppID );
+        emit ChargeSppDetails( block.number+expires, nonce );
     }
     
     function closeSpp(uint256 sppID) public returns(bool success){
