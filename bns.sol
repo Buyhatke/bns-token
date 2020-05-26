@@ -112,8 +112,7 @@ contract StandardToken is Token {
     event Subscribe( uint256 indexed orderId, address indexed merchantAddress, address indexed customerAddress, address token, uint256 value, uint256 period );
     event Charge( uint256 orderId );
     event SubscribeToSpp( uint256 indexed sppID, address indexed customerAddress, uint256 value, uint256 period, address indexed tokenGet, address tokenGive );
-    event ChargeSpp( uint256 sppID );
-    event ChargeSppDetails( uint256 expires, uint nonce );
+    event ChargeSpp( uint256 sppID , uint256 expires, uint256 nonce);
     event Deposit(address indexed token, address indexed user, uint amount, uint balance);
     event Withdraw(address indexed token, address indexed user, uint amount, uint balance);
     event CloseSpp(uint256 sppID);
@@ -384,12 +383,11 @@ contract StandardToken is Token {
         require(sppSubscriptionStats[sppID].lastPaidAt+sppSubscriptionStats[sppID].period<=now,"Charged too early");
         require(TradeEngine(TradeEngineAddress).deductFee(sppSubscriptionStats[sppID].customerAddress, usdt, uint(2*rateTrxUsdt)),"fee unable to charge");// need to multiply with 10^8??
         nonce += 1;
-        emit ChargeSppDetails( (block.number+expires), nonce );
         bytes32 hash = sha256(TradeEngineAddress, sppSubscriptionStats[sppID].tokenGet, amountGet , sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce);
         hash2sppId[hash] = sppID;
         onGoing[sppID] = block.number+expires;
         TradeEngine(TradeEngineAddress).orderBNS(sppSubscriptionStats[sppID].tokenGet, amountGet, sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce, sppSubscriptionStats[sppID].customerAddress);
-        emit ChargeSpp( sppID );
+        emit ChargeSpp( sppID, (block.number+expires), nonce  );
         
     }
     
