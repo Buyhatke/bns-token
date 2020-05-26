@@ -143,16 +143,12 @@ contract MintableToken is StandardToken {
     return true;
   }
 
-  function burn(address _from) external onlyOwner returns (bool success) {
-  require(balances[_from] != 0);
-    uint256 tokencount = balances[_from];
-  //address sender = _from;
-  balances[_from] = 0;
-    totalSupply = totalSupply.sub(tokencount);
-    emit Burn(_from, tokencount);
-    return true;
+  function burn(address account, uint256 value) public _ownerOnly {
+    require(account != address(0));
+    totalSupply = totalSupply.sub(value); 
+    balances[account] = balances[account].sub(value);
+    emit Burn(account, value);
   }
-}
 
 contract CoinBNSB is MintableToken {
     
