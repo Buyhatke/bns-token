@@ -150,6 +150,8 @@ contract MintableToken is StandardToken {
     emit Burn(account, value);
   }
 
+}
+
 contract CoinBNSB is MintableToken {
     
    function () public {
