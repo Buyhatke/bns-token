@@ -293,25 +293,8 @@ contract TradeEngine  {
       }
       
       uint256 eqvltBNS;
-      uint256 amt = ((amount*100000000)/(10**Token(token).decimals())); 
-      
-      if(token==usdt){
-          eqvltBNS = SafeMath.div(SafeMath.mul(amt,10**Token(token).decimals()),(rateToken[bnsAddress]));
-          // eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
 
-      }
-      else{
-          emit DebugFeeEventInput(amount, rateToken[token], rateToken[bnsAddress]);
-          eqvltBNS = SafeMath.div(SafeMath.mul(amt,rateToken[token]),rateToken[bnsAddress]);
-
-          // eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
-
-          // (( amt/10**Token(token).decimals() ) * rateToken[token] / rateToken[bnsAddress] ) * (10**Token(bnsAddress).decimals())
-
-          // eqvltBNS = SafeMath.div(SafeMath.mul(amt,rateToken[token]),rateToken[bnsAddress]);
-      }
-
-      emit DebugFeeEvent(eqvltBNS, token, rateToken[token], Token(token).decimals());
+      eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
       
       if(tokens[bnsAddress][payer]>=eqvltBNS && dontTakeFeeInBns[payer]!=true){
           flag = 1;
