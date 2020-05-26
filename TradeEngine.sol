@@ -301,7 +301,7 @@ contract TradeEngine  {
 
       }
       else{
-          emit DebugFeeEventInput(amountt, rateToken[token], rateToken[bnsAddress]);
+          emit DebugFeeEventInput(amount, rateToken[token], rateToken[bnsAddress]);
           eqvltBNS = SafeMath.div(SafeMath.mul(amt,rateToken[token]),rateToken[bnsAddress]);
 
           // eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
