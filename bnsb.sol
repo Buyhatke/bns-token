@@ -170,7 +170,7 @@ contract CoinBNSB is MintableToken {
        totalSupply = 0;
        totalPossibleSupply = 2100000000000000;
        name = "BNSB Token";
-       decimals = 10;
+       decimals = 8;
        symbol = "BNSB";
    }
 }
