@@ -61,7 +61,7 @@ contract Token {
   
   function setRemainingToBeFulfilled(bytes32 hash, uint256 amt) public returns(bool success) {}
   
-  function getRemainingToBeFulfilled(bytes32 hash) public returns(uint256 res) {}
+  function getRemainingToBeFulfilledByHash(bytes32 hash) public returns(uint256 res) {}
   
   function setcurrentTokenStats(bytes32 hash, uint256 amountGotten, uint256 amountGiven) public returns (bool success) {}
 
@@ -100,6 +100,7 @@ contract TradeEngine  {
   event DeductFeeCalled(address indexed payer, address indexed token, uint amount);
   event DeductFeeCalculated(uint feeGet, uint feeGive);
   event DebugFeeEvent(uint feeCalculated, address token, uint rate, uint decimals);
+  event DebugFeeEvent2(uint feeCalculated, uint rate, uint decimals);
 
   constructor() public{
       admin = msg.sender;
@@ -234,7 +235,7 @@ contract TradeEngine  {
     
     if(Token(bnsAddress).getSppIdFromHash(hash)!=0){
          
-        if(Token(bnsAddress).getRemainingToBeFulfilled(hash)==satisfied){
+        if(Token(bnsAddress).getRemainingToBeFulfilledByHash(hash)==satisfied){
             require(Token(bnsAddress).setLastPaidAt(hash),"fail1");
             // require(Token(bnsAddress).setOnGoing(hash),"fail2");
             require(Token(bnsAddress).setRemainingToBeFulfilled(hash, satisfied),"fail3");
@@ -298,6 +299,7 @@ contract TradeEngine  {
           eqvltBNS = SafeMath.div(SafeMath.mul(amt,10**Token(token).decimals()),(rateToken[bnsAddress]));
       }
       else{
+          emit DebugFeeEvent2(amt, rateToken[token], rateToken[bnsAddress]);
           eqvltBNS = SafeMath.div(SafeMath.mul(amt,rateToken[token]),rateToken[bnsAddress]);
       }
 

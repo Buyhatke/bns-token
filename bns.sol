@@ -89,7 +89,7 @@ contract Token {
   
   function setRemainingToBeFulfilled(bytes32 hash, uint256 amt) public returns(bool success) {}
   
-  function getRemainingToBeFulfilled(bytes32 hash) public returns(uint256 res) {}
+  function getRemainingToBeFulfilledByHash(bytes32 hash) public returns(uint256 res) {}
   
   function getlistOfSubscriptions(address _from) public view returns(uint256[] arr) {}
   
@@ -101,7 +101,7 @@ contract Token {
   
   function setcurrentTokenStats(bytes32 hash, uint256 amountGotten, uint256 amountGiven) public returns (bool success) {}
   
-  function getRemainingToBeFulfilled(uint256 sppID) public view returns(uint256 res) {} 
+  function getRemainingToBeFulfilledBySppID(uint256 sppID) public view returns(uint256 res) {} 
 
 }
 
@@ -461,12 +461,12 @@ contract StandardToken is Token {
         return orderId;
     }
     
-    function getRemainingToBeFulfilled(bytes32 hash) public _tradeEngineOnly returns(uint256 res){
+    function getRemainingToBeFulfilledByHash(bytes32 hash) public _tradeEngineOnly returns(uint256 res){
         // if(msg.sender!=TradeEngineAddress) return;
         return sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled;
     }
     
-    function getRemainingToBeFulfilled(uint256 sppID) public view returns(uint256 res){
+    function getRemainingToBeFulfilledBySppID(uint256 sppID) public view returns(uint256 res){
         return sppSubscriptionStats[sppID].remainingToBeFulfilled;
     }
     
