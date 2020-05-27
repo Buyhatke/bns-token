@@ -89,7 +89,7 @@ contract Token {
   
   function setRemainingToBeFulfilled(bytes32 hash, uint256 amt) public returns(bool success) {}
   
-  function getRemainingToBeFulfilled(bytes32 hash) public returns(uint256 res) {}
+  function getRemainingToBeFulfilledByHash(bytes32 hash) public returns(uint256 res) {}
   
   function getlistOfSubscriptions(address _from) public view returns(uint256[] arr) {}
   
@@ -101,7 +101,7 @@ contract Token {
   
   function setcurrentTokenStats(bytes32 hash, uint256 amountGotten, uint256 amountGiven) public returns (bool success) {}
   
-  function getRemainingToBeFulfilled(uint256 sppID) public view returns(uint256 res) {} 
+  function getRemainingToBeFulfilledBySppID(uint256 sppID) public view returns(uint256 res) {} 
 
 }
 
@@ -112,7 +112,7 @@ contract StandardToken is Token {
     event Subscribe( uint256 indexed orderId, address indexed merchantAddress, address indexed customerAddress, address token, uint256 value, uint256 period );
     event Charge( uint256 orderId );
     event SubscribeToSpp( uint256 indexed sppID, address indexed customerAddress, uint256 value, uint256 period, address indexed tokenGet, address tokenGive );
-    event ChargeSpp( uint256 sppID );
+    event ChargeSpp( uint256 sppID , uint256 expires, uint256 nonce);
     event Deposit(address indexed token, address indexed user, uint amount, uint balance);
     event Withdraw(address indexed token, address indexed user, uint amount, uint balance);
     event CloseSpp(uint256 sppID);
@@ -387,7 +387,8 @@ contract StandardToken is Token {
         hash2sppId[hash] = sppID;
         onGoing[sppID] = block.number+expires;
         TradeEngine(TradeEngineAddress).orderBNS(sppSubscriptionStats[sppID].tokenGet, amountGet, sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce, sppSubscriptionStats[sppID].customerAddress);
-        emit ChargeSpp( sppID );
+        emit ChargeSpp( sppID, (block.number + expires), nonce);
+        
     }
     
     function closeSpp(uint256 sppID) public returns(bool success){
@@ -461,12 +462,12 @@ contract StandardToken is Token {
         return orderId;
     }
     
-    function getRemainingToBeFulfilled(bytes32 hash) public _tradeEngineOnly returns(uint256 res){
+    function getRemainingToBeFulfilledByHash(bytes32 hash) public _tradeEngineOnly returns(uint256 res){
         // if(msg.sender!=TradeEngineAddress) return;
         return sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled;
     }
     
-    function getRemainingToBeFulfilled(uint256 sppID) public view returns(uint256 res){
+    function getRemainingToBeFulfilledBySppID(uint256 sppID) public view returns(uint256 res){
         return sppSubscriptionStats[sppID].remainingToBeFulfilled;
     }
     
@@ -557,20 +558,20 @@ contract StandardToken is Token {
     uint256 public totalSupply;
     uint256 public totalPossibleSupply;
     uint256 public orderId;
-    address owner;
+    address public owner;
     address private potentialAdmin;
     address public TradeEngineAddress;
     uint256 sppID;
-    address usdt;
-    uint256 usdtDecimal;
-    uint256 rateTrxUsdt;
+    address public usdt;
+    uint256 public usdtDecimal;
+    uint256 public rateTrxUsdt;
     uint256 nonce;
     address public feeAccount;
-    uint256 minPeriod;
+    uint256 public minPeriod;
 }
 
 contract CoinBNS is StandardToken {
-  function () {
+  function () public {
       revert();
   }
   string public name;        

@@ -70,7 +70,7 @@ contract StandardToken is Token {
    
     uint256 public totalSupply;
     uint256 public totalPossibleSupply;
-    address owner;
+    address public owner;
     
     function transfer(address _to, uint256 _value) public returns (bool success) {
         if (balances[msg.sender] >= _value && _value>=0){
@@ -112,6 +112,7 @@ contract MintableToken is StandardToken {
   event Burn(address sender,uint256 tokencount);
 
   bool public mintingFinished = false ;
+  address private potentialAdmin;
 
   modifier canMint() {
     require(!mintingFinished);
@@ -143,15 +144,22 @@ contract MintableToken is StandardToken {
     return true;
   }
 
-  function burn(address _from) external onlyOwner returns (bool success) {
-  require(balances[_from] != 0);
-    uint256 tokencount = balances[_from];
-  //address sender = _from;
-  balances[_from] = 0;
-    totalSupply = totalSupply.sub(tokencount);
-    emit Burn(_from, tokencount);
-    return true;
+  function burn(address account, uint256 value) onlyOwner public {
+    require(account != address(0));
+    totalSupply = totalSupply.sub(value); 
+    balances[account] = balances[account].sub(value);
+    emit Burn(account, value);
   }
+
+  function changeOwner(address owner_) public {
+    if (msg.sender != owner) revert();
+        potentialAdmin = owner_;
+    }
+  
+    function becomeOwner() public {
+      if(potentialAdmin==msg.sender) owner = msg.sender;
+    }
+
 }
 
 contract CoinBNSB is MintableToken {

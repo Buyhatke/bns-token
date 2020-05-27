@@ -61,7 +61,7 @@ contract Token {
   
   function setRemainingToBeFulfilled(bytes32 hash, uint256 amt) public returns(bool success) {}
   
-  function getRemainingToBeFulfilled(bytes32 hash) public returns(uint256 res) {}
+  function getRemainingToBeFulfilledByHash(bytes32 hash) public returns(uint256 res) {}
   
   function setcurrentTokenStats(bytes32 hash, uint256 amountGotten, uint256 amountGiven) public returns (bool success) {}
 
@@ -87,8 +87,8 @@ contract TradeEngine  {
   mapping (address => mapping (address => uint)) public tokens; 
   mapping (address => mapping (bytes32 => bool)) public orders;
   mapping (address => mapping (bytes32 => uint)) public orderFills;
-  mapping (address=>uint256) rateToken;
-  mapping(address=>bool) dontTakeFeeInBns;
+  mapping (address=>uint256) public rateToken;
+  mapping(address=>bool) public dontTakeFeeInBns;
 
   event Order(address indexed tokenGet, uint amountGet, address indexed tokenGive, uint amountGive, uint expires, uint nonce, address indexed user);
   event Cancel(address indexed tokenGet, uint amountGet, address indexed tokenGive, uint amountGive, uint expires, uint nonce, address indexed user);
@@ -96,6 +96,8 @@ contract TradeEngine  {
   event Deposit(address indexed token, address indexed user, uint amount, uint balance);
   event Withdraw(address indexed token, address indexed user, uint amount, uint balance);
   event DeductFee(address indexed payer, address indexed token, uint amount);
+  
+  
 
   constructor() public{
       admin = msg.sender;
@@ -111,7 +113,7 @@ contract TradeEngine  {
     _;
   }
 
-  bool scLock = false;
+  bool public scLock = false;
     
   modifier _ifNotLocked(){
     require(scLock == false);
@@ -202,6 +204,7 @@ contract TradeEngine  {
     tokens[tokenGet][user] = SafeMath.add(tokens[tokenGet][user], amount);
     
     require(TradeEngine(this).deductFee(user,tokenGet,feeTokenGet),"unable to charge fee 1");
+
     
     if(Token(bnsAddress).getSppIdFromHash(hash)!=0){
         if(flag==1){
@@ -221,7 +224,7 @@ contract TradeEngine  {
     
     if(Token(bnsAddress).getSppIdFromHash(hash)!=0){
          
-        if(Token(bnsAddress).getRemainingToBeFulfilled(hash)==satisfied){
+        if(Token(bnsAddress).getRemainingToBeFulfilledByHash(hash)==satisfied){
             require(Token(bnsAddress).setLastPaidAt(hash),"fail1");
             // require(Token(bnsAddress).setOnGoing(hash),"fail2");
             require(Token(bnsAddress).setRemainingToBeFulfilled(hash, satisfied),"fail3");
@@ -279,14 +282,8 @@ contract TradeEngine  {
       }
       
       uint256 eqvltBNS;
-      uint256 amt = ((amount*100000000)/(10**Token(token).decimals())); 
-      
-      if(token==usdt){
-          eqvltBNS = SafeMath.div(SafeMath.mul(amt,10**Token(token).decimals()),(rateToken[bnsAddress]));
-      }
-      else{
-          eqvltBNS = SafeMath.div(SafeMath.mul(amt,rateToken[token]),rateToken[bnsAddress]);
-      }
+
+      eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
       
       if(tokens[bnsAddress][payer]>=eqvltBNS && dontTakeFeeInBns[payer]!=true){
           flag = 1;
@@ -295,7 +292,6 @@ contract TradeEngine  {
           emit DeductFee(payer,bnsAddress,(eqvltBNS*(100-(discount/100000000))));
           return true;
       }
-      
       else{
           tokens[token][payer] = tokens[token][payer].sub(amount);
           tokens[token][feeAccount] = tokens[token][feeAccount].add(amount);
