@@ -387,7 +387,7 @@ contract StandardToken is Token {
         hash2sppId[hash] = sppID;
         onGoing[sppID] = block.number+expires;
         TradeEngine(TradeEngineAddress).orderBNS(sppSubscriptionStats[sppID].tokenGet, amountGet, sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce, sppSubscriptionStats[sppID].customerAddress);
-        emit ChargeSpp( sppID, (block.number), nonce  );
+        emit ChargeSpp( sppID, (block.number + expires), nonce);
         
     }
     

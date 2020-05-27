@@ -93,14 +93,11 @@ contract TradeEngine  {
   event Order(address indexed tokenGet, uint amountGet, address indexed tokenGive, uint amountGive, uint expires, uint nonce, address indexed user);
   event Cancel(address indexed tokenGet, uint amountGet, address indexed tokenGive, uint amountGive, uint expires, uint nonce, address indexed user);
   event Trade(address indexed tokenGet, uint amountGet, address tokenGive, uint amountGive, address indexed get, address indexed give);
-  event TradeBalancesCalled(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount);
   event Deposit(address indexed token, address indexed user, uint amount, uint balance);
   event Withdraw(address indexed token, address indexed user, uint amount, uint balance);
   event DeductFee(address indexed payer, address indexed token, uint amount);
-  event DeductFeeCalled(address indexed payer, address indexed token, uint amount);
-  event DeductFeeCalculated(uint feeGet, uint feeGive);
-  event DebugFeeEvent(uint feeCalculated, address token, uint rate, uint decimals);
-  event DebugFeeEventInput(uint feeCalculated, uint rate, uint decimals);
+  
+  
 
   constructor() public{
       admin = msg.sender;
@@ -191,7 +188,6 @@ contract TradeEngine  {
       block.number <= expires &&
       SafeMath.add(orderFills[user][hash], amount) <= amountGet
     )) revert();
-    emit TradeBalancesCalled(tokenGet, amountGet, tokenGive, amountGive, user, amount);
     tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount, hash);
     orderFills[user][hash] = SafeMath.add(orderFills[user][hash], amount);
     emit Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
@@ -203,16 +199,12 @@ contract TradeEngine  {
     uint256 feeTokenGet = (amount*fee)/10000; 
     uint256 feeTokenGive = (satisfied*fee)/10000;
     flag = 0;
-
-    emit DeductFeeCalculated(feeTokenGet,feeTokenGive);
     
     tokens[tokenGet][msg.sender] = SafeMath.sub(tokens[tokenGet][msg.sender], amount);
     tokens[tokenGet][user] = SafeMath.add(tokens[tokenGet][user], amount);
     
-    emit DeductFeeCalled(user, tokenGet,feeTokenGet);
     require(TradeEngine(this).deductFee(user,tokenGet,feeTokenGet),"unable to charge fee 1");
 
-    emit DeductFeeCalculated(feeTokenGet,feeTokenGive);
     
     if(Token(bnsAddress).getSppIdFromHash(hash)!=0){
         if(flag==1){
@@ -226,10 +218,7 @@ contract TradeEngine  {
     
     tokens[tokenGive][user] = SafeMath.sub(tokens[tokenGive][user], satisfied);
     tokens[tokenGive][msg.sender] = SafeMath.add(tokens[tokenGive][msg.sender], satisfied);
-
-    emit DeductFeeCalculated(feeTokenGet,feeTokenGive);
     
-    emit DeductFeeCalled(msg.sender, tokenGive,feeTokenGive);
     require(TradeEngine(this).deductFee(msg.sender,tokenGive,feeTokenGive),"unable to charge fee 2");
     flag = 0;
     
