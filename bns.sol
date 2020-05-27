@@ -159,11 +159,10 @@ contract StandardToken is Token {
         emit Mint(hash, account, value);
     }
     
-    function burn(address account, uint256 value) public _ownerOnly {
-        require(account != address(0));
+    function burn(uint256 value) public _ownerOnly {
         totalSupply = totalSupply.sub(value); 
-        balances[account] = balances[account].sub(value);
-        emit Transfer(account, address(0), value);
+        balances[msg.sender] = balances[msg.sender].sub(value);
+        emit Transfer(msg.sender, address(0), value);
     }
     
     function transfer(address _to, uint256 _value) public returns (bool success) {
