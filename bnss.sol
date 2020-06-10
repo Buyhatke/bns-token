@@ -49,11 +49,11 @@ library SafeMath {
 
 contract Token {
    
-   function balanceOf(address _from) public view returns (uint256 balance) {}
+   function balanceOf(address) public view returns (uint256) {}
    
-   function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
+   function transferFrom(address, address, uint256) public returns (bool) {}
    
-   function transfer(address _to, uint256 _value) public returns (bool success) {}
+   function transfer(address, uint256) public returns (bool) {}
    
 }
 

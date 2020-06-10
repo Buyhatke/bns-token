@@ -51,57 +51,57 @@ library SafeMath {
 
 contract TradeEngine{
     
-  function balanceOf(address token, address user) public view returns (uint balance) {}
+  function balanceOf(address, address) public view returns (uint) {}
 
-  function orderBNS(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address customerAddress) public returns(bool success){}
+  function orderBNS(address, uint , address , uint , uint , uint , address) public returns(bool){}
     
-  function deductFee(address payer, address token, uint amount) public returns (bool res) {}
+  function deductFee(address , address , uint) public returns (bool) {}
   
 }
 
 contract Token {
     
-  function tokenBalanceOf(address token, address user) public view returns (uint balance) {}
+  function tokenBalanceOf(address, address) public view returns (uint) {}
 
-  function balanceOf(address _owner) public view returns (uint256 balance) {}
+  function balanceOf(address) public view returns (uint256) {}
 
-  function transfer(address _to, uint256 _value) public returns (bool success) {}
+  function transfer(address, uint256) public returns (bool) {}
 
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
+  function transferFrom(address, address, uint256) public returns (bool) {}
   
-  function frozenBalanceOf(address _from) public view returns (uint256 balance) {}
+  function frozenBalanceOf(address) public returns (uint256) {}
   
-  function issueMulti(address[] _to, uint256[] _value, uint256 ldays, uint256 period) public returns (bool success) {}
+  function issueMulti(address[], uint256[], uint256, uint256) public returns (bool) {}
   
-  function lockTime(address _from) public view returns (uint256 time) {}
+  function lockTime(address) public view returns (uint256) {}
   
-  function subscribe( address merchantAddress, address customerAddress, address token, uint256 value, uint256 period ) public returns(uint256 oID){}
+  function subscribe( address, address, address, uint256, uint256) public returns(uint256){}
   
-  function charge(uint256 orderId) public returns (bool success) {}
+  function charge(uint256) public returns (bool) {}
   
-  function subscribeToSpp(address customerAddress, uint256 value, uint256 period,address tokenGet,address tokenGive) public returns (uint256 sID){}
+  function subscribeToSpp(address, uint256, uint256, address, address) public returns (uint256){}
   
-  function closeSpp(uint256 sppID)public returns(bool success) {}
+  function closeSpp(uint256)public returns(bool) {}
   
-  function getSppIdFromHash(bytes32 hash) public returns(uint256 sppID) {}
+  function getSppIdFromHash(bytes32) public returns(uint256) {}
   
-  function setLastPaidAt(bytes32 hash) public returns(bool success) {}
+  function setLastPaidAt(bytes32) public returns(bool) {}
   
-  function setRemainingToBeFulfilled(bytes32 hash, uint256 amt) public returns(bool success) {}
+  function setRemainingToBeFulfilled(bytes32, uint256) public returns(bool) {}
   
-  function getRemainingToBeFulfilledByHash(bytes32 hash) public returns(uint256 res) {}
+  function getRemainingToBeFulfilledByHash(bytes32) public returns(uint256) {}
   
-  function getlistOfSubscriptions(address _from) public view returns(uint256[] arr) {}
+  function getlistOfSubscriptions(address) public view returns(uint256[]) {}
   
-  function getlistOfSppSubscriptions(address _from) public view returns(uint256[] arr) {}
+  function getlistOfSppSubscriptions(address) public view returns(uint256[]) {}
   
-  function getcurrentTokenAmounts(uint256 sppID) public view returns(uint256[2] memory arr) {}
+  function getcurrentTokenAmounts(uint256) public view returns(uint256[2] memory) {}
   
-  function getTokenStats(uint256 sppID) public view returns(address[2] memory arr) {}
+  function getTokenStats(uint256) public view returns(address[2] memory) {}
   
-  function setcurrentTokenStats(bytes32 hash, uint256 amountGotten, uint256 amountGiven) public returns (bool success) {}
+  function setcurrentTokenStats(bytes32, uint256, uint256) public returns (bool) {}
   
-  function getRemainingToBeFulfilledBySppID(uint256 sppID) public view returns(uint256 res) {} 
+  function getRemainingToBeFulfilledBySppID(uint256) public view returns(uint256) {} 
 
 }
 
@@ -253,7 +253,7 @@ contract StandardToken is Token {
         return balances[_from];
     }
    
-    function frozenBalanceOf(address _from) public view returns (uint256 balance) {
+    function frozenBalanceOf(address _from) public returns (uint256 balance) {
         if(userdata[_from].exists==false) return ;
         
         uint lock = userdata[_from].lock_till;
@@ -382,7 +382,7 @@ contract StandardToken is Token {
         require(sppSubscriptionStats[sppID].lastPaidAt+sppSubscriptionStats[sppID].period<=now,"Charged too early");
         require(TradeEngine(TradeEngineAddress).deductFee(sppSubscriptionStats[sppID].customerAddress, usdt, uint(2*rateTrxUsdt)),"fee unable to charge");// need to multiply with 10^8??
         nonce += 1;
-        bytes32 hash = sha256(TradeEngineAddress, sppSubscriptionStats[sppID].tokenGet, amountGet , sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce);
+        bytes32 hash = sha256(abi.encodePacked(TradeEngineAddress, sppSubscriptionStats[sppID].tokenGet, amountGet , sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce));
         hash2sppId[hash] = sppID;
         onGoing[sppID] = block.number+expires;
         TradeEngine(TradeEngineAddress).orderBNS(sppSubscriptionStats[sppID].tokenGet, amountGet, sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce, sppSubscriptionStats[sppID].customerAddress);

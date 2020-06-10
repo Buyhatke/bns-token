@@ -51,19 +51,19 @@ library SafeMath {
 
 contract Token {
 
-  function transfer(address _to, uint256 _value) public returns (bool success) {}
+  function transfer(address, uint256) public returns (bool) {}
 
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
+  function transferFrom(address, address, uint256) public returns (bool) {}
   
-  function getSppIdFromHash(bytes32 hash) public returns(uint256 sppID) {}
+  function getSppIdFromHash(bytes32) public returns(uint256) {}
   
-  function setLastPaidAt(bytes32 hash) public returns(bool success) {}
+  function setLastPaidAt(bytes32) public returns(bool) {}
   
-  function setRemainingToBeFulfilled(bytes32 hash, uint256 amt) public returns(bool success) {}
+  function setRemainingToBeFulfilled(bytes32, uint256) public returns(bool) {}
   
-  function getRemainingToBeFulfilledByHash(bytes32 hash) public returns(uint256 res) {}
+  function getRemainingToBeFulfilledByHash(bytes32) public returns(uint256) {}
   
-  function setcurrentTokenStats(bytes32 hash, uint256 amountGotten, uint256 amountGiven) public returns (bool success) {}
+  function setcurrentTokenStats(bytes32, uint256, uint256) public returns (bool) {}
 
   uint public decimals;
   string public name;
@@ -104,7 +104,7 @@ contract TradeEngine  {
       discountLockTill = now+(365*86400);
   }
 
-  function() {
+  function() public {
     revert();
   }
   
@@ -166,7 +166,7 @@ contract TradeEngine  {
   }
 
   function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) public _ifNotLocked {
-      bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+      bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
       orders[msg.sender][hash] = true;
       emit Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
   }
@@ -175,14 +175,14 @@ contract TradeEngine  {
       if(msg.sender!=bnsAddress){
           return false;
       }
-      bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+      bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
       orders[customerAddress][hash] = true;
       emit Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, customerAddress);
       return true;
   }
 
   function trade(address tokenGet, uint256 amountGet, address tokenGive, uint256 amountGive, uint256 expires, uint256 nonce, address user, uint256 amount) public _ifNotLocked {
-    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     if (!(
       orders[user][hash] &&
       block.number <= expires &&
@@ -245,7 +245,7 @@ contract TradeEngine  {
   }
 
   function availableVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) public view returns(uint) {
-    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     if (!(
       orders[user][hash] &&
       block.number <= expires
@@ -257,12 +257,12 @@ contract TradeEngine  {
   }
 
   function amountFilled(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) public view returns(uint) {
-    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     return orderFills[user][hash];
   }
 
   function cancelOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) public {
-    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     if (!orders[msg.sender][hash]) revert();
     orderFills[msg.sender][hash] = amountGet;
     orders[msg.sender][hash] = false;
