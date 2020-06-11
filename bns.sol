@@ -468,9 +468,11 @@ contract BNSToken is Token {
     
     function setcurrentTokenStats(bytes32 hash, uint256 amountGotten, uint256 amountGiven) public returns (bool success){
         if(msg.sender!=TradeEngineAddress) return false;
-        tokenStats[hash2sppId[hash]].amountGotten = tokenStats[hash2sppId[hash]].amountGotten.add(amountGotten);
-        tokenStats[hash2sppId[hash]].amountGiven = tokenStats[hash2sppId[hash]].amountGiven.add(amountGiven);
-        emit SetCurrentTokenStats(hash2sppId[hash], amountGotten, amountGiven);
+        uint256 sppID = hash2sppId[hash];
+        currentTokenStats storage _tokenStats = tokenStats[sppID];
+        tokenStats[sppID].amountGotten = _tokenStats.amountGotten.add(amountGotten);
+        tokenStats[sppID].amountGiven = _tokenStats.amountGiven.add(amountGiven);
+        emit SetCurrentTokenStats(sppID, amountGotten, amountGiven);
         return true;
     }
     
