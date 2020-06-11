@@ -376,16 +376,20 @@ contract BNSToken is Token {
         if( TradeEngine(TradeEngineAddress).balanceOf(tokenGive,customerAddress)>=value ){
             require(TradeEngine(TradeEngineAddress).deductFee(customerAddress, usdt, uint(2*(10**usdtDecimal))),"fee not able to charge");
             sppID += 1;
-            sppSubscriptionStats[sppID].exists = true;
-            sppSubscriptionStats[sppID].customerAddress = customerAddress;
-            sppSubscriptionStats[sppID].tokenGet = tokenGet;
-            sppSubscriptionStats[sppID].tokenGive = tokenGive;
-            sppSubscriptionStats[sppID].value = value;
-            sppSubscriptionStats[sppID].remainingToBeFulfilled = value;
-            sppSubscriptionStats[sppID].period = period;
-            sppSubscriptionStats[sppID].lastPaidAt = now-period;
-            tokenStats[sppID].TokenToGet = tokenGet;
-            tokenStats[sppID].TokenToGive = tokenGive;
+            sppSubscriptionStats[sppID] = sppSubscribers({
+                exists: true,
+                customerAddress: customerAddress,
+                tokenGet: tokenGet,
+                tokenGive: tokenGive,
+                value: value,
+                remainingToBeFulfilled : value,
+                period: period,
+                lastPaidAt: now - period
+            });
+            tokenStats[sppID] = currentTokenStats({
+                TokenToGet : tokenGet,
+                TokenToGive: tokenGive
+            })
             sppSubList[customerAddress].arr.push(sppID);
             emit SubscribeToSpp( sppID, customerAddress, value, period, tokenGet, tokenGive );
             return sppID;
@@ -393,16 +397,17 @@ contract BNSToken is Token {
     }
     
     function chargeSpp(uint256 sppID, uint256 amountGet, uint256 amountGive, uint256 expires ) public _ownerOnly _ifNotLocked {
-        require(amountGive==sppSubscriptionStats[sppID].remainingToBeFulfilled,"check");
+        sppSubscribers storage _subscriptionData = sppSubscriptionStats[sppID];
+        require(amountGive==_subscriptionData.remainingToBeFulfilled,"check");
         require(onGoing[sppID]<block.number,"chargeSpp is already onGoing for this sppId");
-        require(sppSubscriptionStats[sppID].exists==true,"This SPP does not exist, wrong SPP ID");
-        require(sppSubscriptionStats[sppID].lastPaidAt+sppSubscriptionStats[sppID].period<=now,"Charged too early");
-        require(TradeEngine(TradeEngineAddress).deductFee(sppSubscriptionStats[sppID].customerAddress, usdt, uint(2*rateTrxUsdt)),"fee unable to charge");// need to multiply with 10^8??
+        require(_subscriptionData.exists==true,"This SPP does not exist, wrong SPP ID");
+        require(_subscriptionData.lastPaidAt+_subscriptionData.period<=now,"Charged too early");
+        require(TradeEngine(TradeEngineAddress).deductFee(_subscriptionData.customerAddress, usdt, uint(2*rateTrxUsdt)),"fee unable to charge");// need to multiply with 10^8??
         nonce += 1;
-        bytes32 hash = sha256(abi.encodePacked(TradeEngineAddress, sppSubscriptionStats[sppID].tokenGet, amountGet , sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce));
+        bytes32 hash = sha256(abi.encodePacked(TradeEngineAddress, _subscriptionData.tokenGet, amountGet , _subscriptionData.tokenGive, amountGive, block.number+expires, nonce));
         hash2sppId[hash] = sppID;
         onGoing[sppID] = block.number+expires;
-        TradeEngine(TradeEngineAddress).orderBNS(sppSubscriptionStats[sppID].tokenGet, amountGet, sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce, sppSubscriptionStats[sppID].customerAddress);
+        TradeEngine(TradeEngineAddress).orderBNS(_subscriptionData.tokenGet, amountGet, _subscriptionData.tokenGive, amountGive, block.number+expires, nonce, _subscriptionData.customerAddress);
         emit ChargeSpp( sppID, (block.number + expires), nonce);
         
     }
@@ -437,8 +442,10 @@ contract BNSToken is Token {
     
     function setLastPaidAt(bytes32 hash) public returns(bool success){
         if(msg.sender!=TradeEngineAddress) return false;
-        if ( (now - (sppSubscriptionStats[hash2sppId[hash]].lastPaidAt + sppSubscriptionStats[hash2sppId[hash]].period))<14400 ){
-            sppSubscriptionStats[hash2sppId[hash]].lastPaidAt = sppSubscriptionStats[hash2sppId[hash]].lastPaidAt.add(sppSubscriptionStats[hash2sppId[hash]].period);
+        uint256 sppID = hash2sppId[hash];
+        sppSubscribers storage _subscriptionData = sppSubscriptionStats[sppID];
+        if ( (now - (_subscriptionData.lastPaidAt + _subscriptionData.period))<14400 ){
+            sppSubscriptionStats[hash2sppId[hash]].lastPaidAt = _subscriptionData.lastPaidAt.add(_subscriptionData.period);
         }
         else{
             sppSubscriptionStats[hash2sppId[hash]].lastPaidAt = now;
@@ -448,9 +455,11 @@ contract BNSToken is Token {
     
     function setRemainingToBeFulfilled(bytes32 hash, uint256 amt) public returns(bool success){
         if(msg.sender!=TradeEngineAddress) return false;
-        if((sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled == amt)) sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled = sppSubscriptionStats[hash2sppId[hash]].value;
+        uint256 sppID = hash2sppId[hash];
+        sppSubscribers storage _subscriptionData = sppSubscriptionStats[sppID];
+        if((_subscriptionData.remainingToBeFulfilled == amt)) sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled = _subscriptionData.value;
         else{
-            sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled = sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled.sub(amt);
+            sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled = _subscriptionData.remainingToBeFulfilled.sub(amt);
         }
         return true;
     }
