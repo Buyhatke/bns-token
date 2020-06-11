@@ -159,7 +159,7 @@ contract BNSToken is Token {
     }
     
     function burn(uint256 value) public _ownerOnly {
-        totalSupply = totalSupply.sub(value); 
+        totalSupply = totalSupply.sub(value);
         balances[msg.sender] = balances[msg.sender].sub(value);
         emit Transfer(msg.sender, address(0), value);
     }
