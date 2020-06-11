@@ -388,7 +388,9 @@ contract BNSToken is Token {
             });
             tokenStats[sppID] = currentTokenStats({
                 TokenToGet : tokenGet,
-                TokenToGive: tokenGive
+                TokenToGive: tokenGive,
+                amountGotten: 0,
+                amountGiven: 0
             });
             sppSubList[customerAddress].arr.push(sppID);
             emit SubscribeToSpp( sppID, customerAddress, value, period, tokenGet, tokenGive );
