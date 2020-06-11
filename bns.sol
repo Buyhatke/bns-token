@@ -179,7 +179,6 @@ contract BNSToken is Token {
        require(_value.length==_to.length,"array size misatch");
        uint256 sum = 0;
        userstats storage _oldData;
-       userstats storage _newData;
        uint256 _oldFrozen = 0;
        for(uint i=0;i<_value.length;i++){
            sum = sum.add(_value[i]);
@@ -192,14 +191,13 @@ contract BNSToken is Token {
              if(_oldData.exists == true){
                  _oldFrozen = _oldData.frozen_balance;
              }
-             _newData = userstats({
+             userdata[_to[j]] = userstats({
                 exists: true,
                 frozen_balance: _oldFrozen.add(_value[j]),
                 lock_till: now.add((ldays.mul(86400))),
                 time_period: (period.mul(86400)),
                 per_tp_release_amt: SafeMath.div(SafeMath.add(_value[j],_oldFrozen),(ldays.div(period)))
             });
-            userdata[_to[j]] = _newData;
              emit Transfer(msg.sender, _to[j], _value[j]);
            }
            return true;
@@ -212,12 +210,12 @@ contract BNSToken is Token {
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
-   
+
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
       
       if (balances[_from] >= _value &&  _value >= 0 && (allowed[_from][msg.sender] >= _value || _from==msg.sender)) {
-          
-          userstats _userData = userdata[_from];
+        
+          userstats storage _userData = userdata[_from];
           
             if(_userData.exists==false){
                 _transfer(_from, _to, _value);
@@ -264,7 +262,7 @@ contract BNSToken is Token {
     }
    
     function frozenBalanceOf(address _from) public returns (uint256 balance) {
-        userstats _userData = userdata[_from];
+        userstats storage _userData = userdata[_from];
         if(_userData.exists==false) return ;
         
         uint lock = _userData.lock_till;
