@@ -389,7 +389,7 @@ contract BNSToken is Token {
             tokenStats[sppID] = currentTokenStats({
                 TokenToGet : tokenGet,
                 TokenToGive: tokenGive
-            })
+            });
             sppSubList[customerAddress].arr.push(sppID);
             emit SubscribeToSpp( sppID, customerAddress, value, period, tokenGet, tokenGive );
             return sppID;
