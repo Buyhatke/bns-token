@@ -216,36 +216,39 @@ contract BNSToken is Token {
       
       if (balances[_from] >= _value &&  _value >= 0 && (allowed[_from][msg.sender] >= _value || _from==msg.sender)) {
           
-            if(userdata[_from].exists==false){
+          userstats _userData = userdata[_from];
+          
+            if(_userData.exists==false){
                 _transfer(_from, _to, _value);
                 return true;
             }
             
-            uint lock = userdata[_from].lock_till;
+            uint lock = _userData.lock_till;
             
             if(now >= lock){
-                userdata[_from].frozen_balance = 0;
-                userdata[_from].exists = false;
+                _userData.frozen_balance = 0;
+                _userData.exists = false;
+                userdata[_from] = _userData;
                 _transfer(_from, _to, _value);
                 return true;
             }
             
             uint256 a = (lock-now);
-            uint256 b = userdata[_from].time_period;
-            uint256 should_be_frozen = SafeMath.mul((SafeMath.div(a,b) + 1),userdata[_from].per_tp_release_amt);
+            uint256 b = _userData.time_period;
+            uint256 should_be_frozen = SafeMath.mul((SafeMath.div(a,b) + 1),_userData.per_tp_release_amt);
             
-            if(userdata[_from].frozen_balance > should_be_frozen){
-                userdata[_from].frozen_balance = should_be_frozen;
+            if(_userData.frozen_balance > should_be_frozen){
+                _userData.frozen_balance = should_be_frozen;
             }
             
-            if(balances[_from].sub(_value)>=userdata[_from].frozen_balance){   
+            if(balances[_from].sub(_value)>=_userData.frozen_balance){
                 _transfer(_from, _to, _value);
-                return true;  
+                return true;
             }
             
             return false;
-       } 
-       else { return false; }
+       }
+       else {return false;}
    }
    
    function _transfer(address _from, address _to, uint256 _value) internal {
@@ -260,25 +263,28 @@ contract BNSToken is Token {
     }
    
     function frozenBalanceOf(address _from) public returns (uint256 balance) {
-        if(userdata[_from].exists==false) return ;
+        userstats _userData = userdata[_from];
+        if(_userData.exists==false) return ;
         
-        uint lock = userdata[_from].lock_till;
+        uint lock = _userData.lock_till;
         
         if(now >= lock) {
-            userdata[_from].frozen_balance = 0;
-            userdata[_from].exists = false;
+            _userData.frozen_balance = 0;
+            _userData.exists = false;
+            userdata[_from] = _userData;
             return 0;
         }
         
         uint256 a = (lock-now);
-        uint256 b = userdata[_from].time_period;
-        uint256 should_be_frozen = SafeMath.mul((SafeMath.div(a,b) + 1),userdata[_from].per_tp_release_amt);
+        uint256 b = _userData.time_period;
+        uint256 should_be_frozen = SafeMath.mul((SafeMath.div(a,b) + 1),_userData.per_tp_release_amt);
             
-        if(userdata[_from].frozen_balance > should_be_frozen){
-            userdata[_from].frozen_balance = should_be_frozen;
+        if(_userData.frozen_balance > should_be_frozen){
+            _userData.frozen_balance = should_be_frozen;
+            userdata[_from] = _userData;
         }
         
-        return userdata[_from].frozen_balance;
+        return _userData.frozen_balance;
     }
    
     function lockTime(address _from) public view returns (uint256 time) {
