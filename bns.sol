@@ -238,6 +238,7 @@ contract BNSToken is Token {
             
             if(_userData.frozen_balance > should_be_frozen){
                 _userData.frozen_balance = should_be_frozen;
+                userdata[_from] = _userData;
             }
             
             if(balances[_from].sub(_value)>=_userData.frozen_balance){
