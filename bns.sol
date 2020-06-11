@@ -329,13 +329,15 @@ contract BNSToken is Token {
         }
         if(tokens[token][msg.sender]>=value && value>0){
             orderId += 1;
-            subscriptiondata[orderId].exists = true;
-            subscriptiondata[orderId].value = value;
-            subscriptiondata[orderId].period = period;
-            subscriptiondata[orderId].lastPaidAt = now-period;
-            subscriptiondata[orderId].merchantAddress = merchantAddress;
-            subscriptiondata[orderId].customerAddress = customerAddress;
-            subscriptiondata[orderId].tokenType = token;
+            subscriptiondata[orderId] = subscriptionstats({
+                exists : true,
+                value: value,
+                period: period,
+                lastPaidAt: now-period,
+                merchantAddress: merchantAddress,
+                customerAddress: customerAddress,
+                tokenType: token
+            });
             subList[customerAddress].arr.push(orderId);
             emit Subscribe( orderId, merchantAddress, customerAddress, token, value, period );
             return orderId;
@@ -343,22 +345,25 @@ contract BNSToken is Token {
     }
     
     function charge(uint256 orderId) public _ifNotLocked returns (bool success){
-        require(subscriptiondata[orderId].exists == true, "This subscription does not exist, wrong orderId");
-        require(subscriptiondata[orderId].merchantAddress == msg.sender, "You are not the real merchant");
-        require(subscriptiondata[orderId].lastPaidAt+subscriptiondata[orderId].period <= now, "charged too early");
-        address token = subscriptiondata[orderId].tokenType;
-        tokens[token][subscriptiondata[orderId].customerAddress] = tokens[token][subscriptiondata[orderId].customerAddress].sub(subscriptiondata[orderId].value);
-        uint256 fee = ((subscriptiondata[orderId].value).mul(25)).div(10000);
+        subscriptionstats storage _orderData = subscriptiondata[orderId];
+        require(_orderData.exists == true, "This subscription does not exist, wrong orderId");
+        require(_orderData.merchantAddress == msg.sender, "You are not the real merchant");
+        require(_orderData.lastPaidAt+_orderData.period <= now, "charged too early");
+        address token = _orderData.tokenType;
+        tokens[token][_orderData.customerAddress] = tokens[token][_orderData.customerAddress].sub(_orderData.value);
+        uint256 fee = ((_orderData.value).mul(25)).div(10000);
         tokens[token][feeAccount] = SafeMath.add(tokens[token][feeAccount],fee);
-        tokens[token][subscriptiondata[orderId].merchantAddress] = tokens[token][subscriptiondata[orderId].merchantAddress].add((subscriptiondata[orderId].value.sub(fee)));
-        subscriptiondata[orderId].lastPaidAt = SafeMath.add(subscriptiondata[orderId].lastPaidAt,subscriptiondata[orderId].period);
+        tokens[token][_orderData.merchantAddress] = tokens[token][_orderData.merchantAddress].add((_orderData.value.sub(fee)));
+        _orderData.lastPaidAt = SafeMath.add(_orderData.lastPaidAt,_orderData.period);
+        subscriptiondata[orderId] = _orderData;
         emit Charge( orderId );
         return true;
     }
     
     function closeSubscription(uint256 orderId) public returns (bool success){
-        require(subscriptiondata[orderId].exists == true, "This subscription does not exist, wrong orderId OR already closed");
-        require(subscriptiondata[orderId].customerAddress == msg.sender, "You are not the customer of this orderId");
+        subscriptionstats storage _orderData = subscriptiondata[orderId];
+        require(_orderData.exists == true, "This subscription does not exist, wrong orderId OR already closed");
+        require(_orderData.customerAddress == msg.sender, "You are not the customer of this orderId");
         subscriptiondata[orderId].exists = false;
         return true;
     }
