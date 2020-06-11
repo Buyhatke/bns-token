@@ -178,9 +178,9 @@ contract BNSToken is Token {
        require(_value.length<=20,"too long array");
        require(_value.length==_to.length,"array size misatch");
        uint256 sum = 0;
-       userstats _oldData;
-       userstats _newData;
-       unit256 _oldFrozen = 0;
+       userstats storage _oldData;
+       userstats storage _newData;
+       uint256 _oldFrozen = 0;
        for(uint i=0;i<_value.length;i++){
            sum = sum.add(_value[i]);
        }
