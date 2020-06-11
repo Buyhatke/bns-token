@@ -105,7 +105,7 @@ contract Token {
 
 }
 
-contract StandardToken is Token {
+contract BNSToken is Token {
     
     using SafeMath for uint256;
     
@@ -142,8 +142,7 @@ contract StandardToken is Token {
         scLock = !scLock;
     }
     
-    function changeOwner(address owner_) public {
-    if (msg.sender != owner) revert();
+    function changeOwner(address owner_) public _ownerOnly {
         potentialAdmin = owner_;
     }
   
@@ -209,10 +208,7 @@ contract StandardToken is Token {
       if (balances[_from] >= _value &&  _value >= 0 && (allowed[_from][msg.sender] >= _value || _from==msg.sender)) {
           
             if(userdata[_from].exists==false){
-                balances[_to] = balances[_to].add(_value);
-                if(_from!=msg.sender) allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
-                balances[_from] = balances[_from].sub(_value);
-                emit Transfer(_from, _to, _value);
+                _transfer(_from, _to, _value);
                 return true;
             }
             
@@ -221,10 +217,7 @@ contract StandardToken is Token {
             if(now >= lock){
                 userdata[_from].frozen_balance = 0;
                 userdata[_from].exists = false;
-                balances[_to] = SafeMath.add(balances[_to],_value);
-                if(_from!=msg.sender) allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
-                balances[_from] = SafeMath.sub(balances[_from],_value);
-                emit Transfer(_from, _to, _value);
+                _transfer(_from, _to, _value);
                 return true;
             }
             
@@ -237,16 +230,20 @@ contract StandardToken is Token {
             }
             
             if(balances[_from].sub(_value)>=userdata[_from].frozen_balance){   
-                balances[_to] = balances[_to].add(_value);
-                if(_from!=msg.sender) allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
-                balances[_from] = balances[_from].sub(_value);
-                emit Transfer(_from, _to, _value);
+                _transfer(_from, _to, _value);
                 return true;  
             }
             
             return false;
        } 
        else { return false; }
+   }
+   
+   function _transfer(address _from, address _to, uint256 _value) internal {
+       balances[_to] = balances[_to].add(_value);
+       if(_from!=msg.sender) allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
+       balances[_from] = balances[_from].sub(_value);
+       emit Transfer(_from, _to, _value);
    }
    
     function balanceOf(address _from) public view returns (uint256 balance) {
@@ -397,15 +394,13 @@ contract StandardToken is Token {
         return true;
     }
     
-    function setrateTrxUsdt(uint256 _value) public _ownerOnly returns(bool res){
+    function setrateTrxUsdt(uint256 _value) public _ownerOnly{
         rateTrxUsdt = _value;
-        return true;
     }
     
-    function setAddresses(address usdt1, address feeAccount1) public _ownerOnly returns (bool res){
+    function setAddresses(address usdt1, address feeAccount1) public _ownerOnly{
       usdt = usdt1;
       feeAccount = feeAccount1;
-      return true;
     }
     
     function setUsdtDecimal(uint256 decimal) public _ownerOnly{
@@ -416,6 +411,10 @@ contract StandardToken is Token {
         minPeriod = p;
     } 
     
+    function setTradeEngineAddress(address _add) public _ownerOnly{
+        TradeEngineAddress = _add;
+    }
+    
     function setLastPaidAt(bytes32 hash) public returns(bool success){
         if(msg.sender!=TradeEngineAddress) return false;
         if ( (now - (sppSubscriptionStats[hash2sppId[hash]].lastPaidAt + sppSubscriptionStats[hash2sppId[hash]].period))<14400 ){
@@ -424,11 +423,6 @@ contract StandardToken is Token {
         else{
             sppSubscriptionStats[hash2sppId[hash]].lastPaidAt = now;
         }
-        return true;
-    }
-    
-    function setTradeEngineAddress(address _add) public _ownerOnly returns (bool success){
-        TradeEngineAddress = _add;
         return true;
     }
     
@@ -462,7 +456,6 @@ contract StandardToken is Token {
     }
     
     function getRemainingToBeFulfilledByHash(bytes32 hash) public _tradeEngineOnly returns(uint256 res){
-        // if(msg.sender!=TradeEngineAddress) return;
         return sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled;
     }
     
@@ -569,7 +562,7 @@ contract StandardToken is Token {
     uint256 public minPeriod;
 }
 
-contract CoinBNS is StandardToken {
+contract CoinBNS is BNSToken {
   function () public {
       revert();
   }

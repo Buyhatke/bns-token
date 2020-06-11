@@ -285,7 +285,7 @@ contract TradeEngine  {
 
       eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
       
-      if(tokens[bnsAddress][payer]>=eqvltBNS && dontTakeFeeInBns[payer]!=true){
+      if(tokens[bnsAddress][payer]>=eqvltBNS){
           flag = 1;
           tokens[bnsAddress][payer] = tokens[bnsAddress][payer].sub((eqvltBNS*(100-(discount/100000000)))/100);
           tokens[bnsAddress][feeAccount] = tokens[bnsAddress][feeAccount].add((eqvltBNS*(100-(discount/100000000)))/100);
@@ -302,15 +302,12 @@ contract TradeEngine  {
       return false;
   }
 
-  function setAddresses(address usdt1, address feeAccount1) public returns (bool res){
-      if(msg.sender!=admin) return false;
+  function setAddresses(address usdt1, address feeAccount1) public _ownerOnly{
       usdt = usdt1;
       feeAccount = feeAccount1;
-      return true;
   }
   
-  function setDiscount() public returns (bool res){
-      if(msg.sender!=admin) return false;
+  function setDiscount() public _ownerOnly{
       require(now>=discountLockTill,"too early to change discount rate...");
       discount = SafeMath.div(discount,2);
       discountLockTill = SafeMath.add(discountLockTill,(365*86400));
@@ -320,21 +317,17 @@ contract TradeEngine  {
       dontTakeFeeInBns[msg.sender] = !dontTakeFeeInBns[msg.sender];
   }
   
-  function setRateToken(address[] token, uint256[] rate) public {
-      if (msg.sender != admin) revert();
+  function setRateToken(address[] token, uint256[] rate) public _ownerOnly {
       for(uint i=0;i<token.length;i++){
           rateToken[token[i]] = rate[i];
       }
   }
   
-  function setbnsAddress(address _add) public returns (bool success){
-      if(msg.sender!=admin) return false;
+  function setbnsAddress(address _add) public _ownerOnly{
       bnsAddress = _add;
-      return true;
   }
   
-  function setFeePercent(uint256 fee1) public {
-      if (msg.sender != admin) revert();
+  function setFeePercent(uint256 fee1) public _ownerOnly {
       require((fee1 <= 50),"cant be more than 50");
       fee = fee1;
   }
