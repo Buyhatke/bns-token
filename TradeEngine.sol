@@ -270,32 +270,35 @@ contract TradeEngine  {
     emit Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
   }
   
+
+  function _deduct(address _payer, address _token, uint256 _amount) internal {
+      tokens[_token][_payer] = tokens[_token][_payer].sub(_amount);
+      tokens[_token][feeAccount] = tokens[_token][feeAccount].add(_amount);
+      emit DeductFee(_payer,_token,_amount);
+  }
+
   function deductFee(address payer, address token, uint256 amount) public returns (bool res){
       
       require( (msg.sender==address(this) || msg.sender==bnsAddress),"this can only be called by bnsAddress or this contract" );
       
       if(dontTakeFeeInBns[payer]==true){
-          tokens[token][payer] = tokens[token][payer].sub(amount);
-          tokens[token][feeAccount] = tokens[token][feeAccount].add(amount);
-          emit DeductFee(payer,token,amount);
+          _deduct(payer, token, amount);
           return true;
       }
       
       uint256 eqvltBNS;
+      uint256 feeBNS;
 
       eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount,rateToken[token]), 10**Token(bnsAddress).decimals()), 10**Token(token).decimals()),rateToken[bnsAddress]);
       
       if(tokens[bnsAddress][payer]>=eqvltBNS){
           flag = 1;
-          tokens[bnsAddress][payer] = tokens[bnsAddress][payer].sub((eqvltBNS*(100-(discount/100000000)))/100);
-          tokens[bnsAddress][feeAccount] = tokens[bnsAddress][feeAccount].add((eqvltBNS*(100-(discount/100000000)))/100);
-          emit DeductFee(payer,bnsAddress,(eqvltBNS*(100-(discount/100000000))));
+          feeBNS = ((eqvltBNS*(100-(discount/100000000)))/100);
+          _deduct(payer, bnsAddress, feeBNS);
           return true;
       }
       else{
-          tokens[token][payer] = tokens[token][payer].sub(amount);
-          tokens[token][feeAccount] = tokens[token][feeAccount].add(amount);
-          emit DeductFee(payer,token,amount);
+          _deduct(payer, token, amount);
           return true;
       }
       
