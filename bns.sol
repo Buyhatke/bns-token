@@ -178,6 +178,8 @@ contract BNSToken is Token {
        require(_value.length<=20,"too long array");
        require(_value.length==_to.length,"array size misatch");
        uint256 sum = 0;
+       userstats _oldData, _newData;
+       unit256 _oldFrozen = 0;
        for(uint i=0;i<_value.length;i++){
            sum = sum.add(_value[i]);
        }
@@ -185,16 +187,23 @@ contract BNSToken is Token {
            balances[msg.sender] = balances[msg.sender].sub(sum);
            for(uint j=0;j<_to.length;j++){
              balances[_to[j]] = balances[_to[j]].add(_value[j]);
-             userdata[_to[j]].exists = true;
-             userdata[_to[j]].frozen_balance = userdata[_to[j]].frozen_balance.add(_value[j]);
-             userdata[_to[j]].lock_till = now.add((ldays.mul(86400)));
-             userdata[_to[j]].time_period = (period.mul(86400));
-             userdata[_to[j]].per_tp_release_amt = SafeMath.div(userdata[_to[j]].frozen_balance,(ldays.div(period)));
+             _oldData = userdata[_to[j]];
+             if(_oldData.exists == true){
+                 _oldFrozen = _oldData.frozen_balance;
+             }
+             _newData = userstats({
+                exists: true,
+                frozen_balance: _oldFrozen.add(_value[j]),
+                lock_till: now.add((ldays.mul(86400))),
+                time_period: (period.mul(86400)),
+                per_tp_release_amt: SafeMath.div(SafeMath.add(_value[j],_oldFrozen),(ldays.div(period)))
+            });
+            userdata[_to[j]] = _newData;
              emit Transfer(msg.sender, _to[j], _value[j]);
            }
            return true;
-       } 
-       else { return false; }
+       }
+       else {return false;}
     }
    
     function approve(address _spender, uint256 _value) public returns (bool) {
