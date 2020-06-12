@@ -178,7 +178,7 @@ contract BNSToken is Token {
        require(_value.length<=20,"too long array");
        require(_value.length==_to.length,"array size misatch");
        uint256 sum = 0;
-       userstats storage _oldData;
+       userstats memory _oldData;
        uint256 _oldFrozen = 0;
        for(uint i=0;i<_value.length;i++){
            sum = sum.add(_value[i]);
@@ -215,7 +215,7 @@ contract BNSToken is Token {
       
       if (balances[_from] >= _value &&  _value >= 0 && (allowed[_from][msg.sender] >= _value || _from==msg.sender)) {
         
-          userstats storage _userData = userdata[_from];
+          userstats memory _userData = userdata[_from];
           
             if(_userData.exists==false){
                 _transfer(_from, _to, _value);
@@ -263,7 +263,7 @@ contract BNSToken is Token {
     }
    
     function frozenBalanceOf(address _from) public returns (uint256 balance) {
-        userstats storage _userData = userdata[_from];
+        userstats memory _userData = userdata[_from];
         if(_userData.exists==false) return ;
         
         uint lock = _userData.lock_till;
@@ -346,7 +346,7 @@ contract BNSToken is Token {
     }
     
     function charge(uint256 orderId) public _ifNotLocked returns (bool success){
-        subscriptionstats storage _orderData = subscriptiondata[orderId];
+        subscriptionstats memory _orderData = subscriptiondata[orderId];
         require(_orderData.exists == true, "This subscription does not exist, wrong orderId");
         require(_orderData.merchantAddress == msg.sender, "You are not the real merchant");
         require(_orderData.lastPaidAt+_orderData.period <= now, "charged too early");
@@ -362,7 +362,7 @@ contract BNSToken is Token {
     }
     
     function closeSubscription(uint256 orderId) public returns (bool success){
-        subscriptionstats storage _orderData = subscriptiondata[orderId];
+        subscriptionstats memory _orderData = subscriptiondata[orderId];
         require(_orderData.exists == true, "This subscription does not exist, wrong orderId OR already closed");
         require(_orderData.customerAddress == msg.sender, "You are not the customer of this orderId");
         subscriptiondata[orderId].exists = false;
@@ -399,7 +399,7 @@ contract BNSToken is Token {
     }
     
     function chargeSpp(uint256 sppID, uint256 amountGet, uint256 amountGive, uint256 expires ) public _ownerOnly _ifNotLocked {
-        sppSubscribers storage _subscriptionData = sppSubscriptionStats[sppID];
+        sppSubscribers memory _subscriptionData = sppSubscriptionStats[sppID];
         require(amountGive==_subscriptionData.remainingToBeFulfilled,"check");
         require(onGoing[sppID]<block.number,"chargeSpp is already onGoing for this sppId");
         require(_subscriptionData.exists==true,"This SPP does not exist, wrong SPP ID");
@@ -445,7 +445,7 @@ contract BNSToken is Token {
     function setLastPaidAt(bytes32 hash) public returns(bool success){
         if(msg.sender!=TradeEngineAddress) return false;
         uint256 sppID = hash2sppId[hash];
-        sppSubscribers storage _subscriptionData = sppSubscriptionStats[sppID];
+        sppSubscribers memory _subscriptionData = sppSubscriptionStats[sppID];
         if ( (now - (_subscriptionData.lastPaidAt + _subscriptionData.period))<14400 ){
             sppSubscriptionStats[hash2sppId[hash]].lastPaidAt = _subscriptionData.lastPaidAt.add(_subscriptionData.period);
         }
@@ -458,7 +458,7 @@ contract BNSToken is Token {
     function setRemainingToBeFulfilled(bytes32 hash, uint256 amt) public returns(bool success){
         if(msg.sender!=TradeEngineAddress) return false;
         uint256 sppID = hash2sppId[hash];
-        sppSubscribers storage _subscriptionData = sppSubscriptionStats[sppID];
+        sppSubscribers memory _subscriptionData = sppSubscriptionStats[sppID];
         if((_subscriptionData.remainingToBeFulfilled == amt)) sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled = _subscriptionData.value;
         else{
             sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled = _subscriptionData.remainingToBeFulfilled.sub(amt);
@@ -469,7 +469,7 @@ contract BNSToken is Token {
     function setcurrentTokenStats(bytes32 hash, uint256 amountGotten, uint256 amountGiven) public returns (bool success){
         if(msg.sender!=TradeEngineAddress) return false;
         uint256 sppID = hash2sppId[hash];
-        currentTokenStats storage _tokenStats = tokenStats[sppID];
+        currentTokenStats memory _tokenStats = tokenStats[sppID];
         tokenStats[sppID].amountGotten = _tokenStats.amountGotten.add(amountGotten);
         tokenStats[sppID].amountGiven = _tokenStats.amountGiven.add(amountGiven);
         emit SetCurrentTokenStats(sppID, amountGotten, amountGiven);
