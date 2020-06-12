@@ -187,10 +187,9 @@ contract BNSToken is Token {
            balances[msg.sender] = balances[msg.sender].sub(sum);
            for(uint j=0;j<_to.length;j++){
              balances[_to[j]] = balances[_to[j]].add(_value[j]);
-             _oldData = userdata[_to[j]];
-             if(_oldData.exists == true){
-                 _oldFrozen = _oldData.frozen_balance;
-             }
+             _oldData = userdata[_to[j]]; 
+             _oldFrozen = _oldData.frozen_balance;
+             
              userdata[_to[j]] = userstats({
                 exists: true,
                 frozen_balance: _oldFrozen.add(_value[j]),
