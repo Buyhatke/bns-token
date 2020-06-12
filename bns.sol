@@ -51,61 +51,61 @@ library SafeMath {
 
 contract TradeEngine{
     
-  function balanceOf(address token, address user) public view returns (uint balance) {}
+  function balanceOf(address, address) public view returns (uint) {}
 
-  function orderBNS(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address customerAddress) public returns(bool success){}
+  function orderBNS(address, uint , address , uint , uint , uint , address) public returns(bool){}
     
-  function deductFee(address payer, address token, uint amount) public returns (bool res) {}
+  function deductFee(address , address , uint) public returns (bool) {}
   
 }
 
 contract Token {
     
-  function tokenBalanceOf(address token, address user) public view returns (uint balance) {}
+  function tokenBalanceOf(address, address) public view returns (uint) {}
 
-  function balanceOf(address _owner) public view returns (uint256 balance) {}
+  function balanceOf(address) public view returns (uint256) {}
 
-  function transfer(address _to, uint256 _value) public returns (bool success) {}
+  function transfer(address, uint256) public returns (bool) {}
 
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
+  function transferFrom(address, address, uint256) public returns (bool) {}
   
-  function frozenBalanceOf(address _from) public view returns (uint256 balance) {}
+  function frozenBalanceOf(address) public returns (uint256) {}
   
-  function issueMulti(address[] _to, uint256[] _value, uint256 ldays, uint256 period) public returns (bool success) {}
+  function issueMulti(address[], uint256[], uint256, uint256) public returns (bool) {}
   
-  function lockTime(address _from) public view returns (uint256 time) {}
+  function lockTime(address) public view returns (uint256) {}
   
-  function subscribe( address merchantAddress, address customerAddress, address token, uint256 value, uint256 period ) public returns(uint256 oID){}
+  function subscribe( address, address, address, uint256, uint256) public returns(uint256){}
   
-  function charge(uint256 orderId) public returns (bool success) {}
+  function charge(uint256) public returns (bool) {}
   
-  function subscribeToSpp(address customerAddress, uint256 value, uint256 period,address tokenGet,address tokenGive) public returns (uint256 sID){}
+  function subscribeToSpp(address, uint256, uint256, address, address) public returns (uint256){}
   
-  function closeSpp(uint256 sppID)public returns(bool success) {}
+  function closeSpp(uint256)public returns(bool) {}
   
-  function getSppIdFromHash(bytes32 hash) public returns(uint256 sppID) {}
+  function getSppIdFromHash(bytes32) public returns(uint256) {}
   
-  function setLastPaidAt(bytes32 hash) public returns(bool success) {}
+  function setLastPaidAt(bytes32) public returns(bool) {}
   
-  function setRemainingToBeFulfilled(bytes32 hash, uint256 amt) public returns(bool success) {}
+  function setRemainingToBeFulfilled(bytes32, uint256) public returns(bool) {}
   
-  function getRemainingToBeFulfilledByHash(bytes32 hash) public returns(uint256 res) {}
+  function getRemainingToBeFulfilledByHash(bytes32) public returns(uint256) {}
   
-  function getlistOfSubscriptions(address _from) public view returns(uint256[] arr) {}
+  function getlistOfSubscriptions(address) public view returns(uint256[]) {}
   
-  function getlistOfSppSubscriptions(address _from) public view returns(uint256[] arr) {}
+  function getlistOfSppSubscriptions(address) public view returns(uint256[]) {}
   
-  function getcurrentTokenAmounts(uint256 sppID) public view returns(uint256[2] memory arr) {}
+  function getcurrentTokenAmounts(uint256) public view returns(uint256[2] memory) {}
   
-  function getTokenStats(uint256 sppID) public view returns(address[2] memory arr) {}
+  function getTokenStats(uint256) public view returns(address[2] memory) {}
   
-  function setcurrentTokenStats(bytes32 hash, uint256 amountGotten, uint256 amountGiven) public returns (bool success) {}
+  function setcurrentTokenStats(bytes32, uint256, uint256) public returns (bool) {}
   
-  function getRemainingToBeFulfilledBySppID(uint256 sppID) public view returns(uint256 res) {} 
+  function getRemainingToBeFulfilledBySppID(uint256) public view returns(uint256) {} 
 
 }
 
-contract StandardToken is Token {
+contract BNSToken is Token {
     
     using SafeMath for uint256;
     
@@ -142,8 +142,7 @@ contract StandardToken is Token {
         scLock = !scLock;
     }
     
-    function changeOwner(address owner_) public {
-    if (msg.sender != owner) revert();
+    function changeOwner(address owner_) public _ownerOnly {
         potentialAdmin = owner_;
     }
   
@@ -160,7 +159,7 @@ contract StandardToken is Token {
     }
     
     function burn(uint256 value) public _ownerOnly {
-        totalSupply = totalSupply.sub(value); 
+        totalSupply = totalSupply.sub(value);
         balances[msg.sender] = balances[msg.sender].sub(value);
         emit Transfer(msg.sender, address(0), value);
     }
@@ -179,6 +178,8 @@ contract StandardToken is Token {
        require(_value.length<=20,"too long array");
        require(_value.length==_to.length,"array size misatch");
        uint256 sum = 0;
+       userstats memory _oldData;
+       uint256 _oldFrozen = 0;
        for(uint i=0;i<_value.length;i++){
            sum = sum.add(_value[i]);
        }
@@ -186,16 +187,22 @@ contract StandardToken is Token {
            balances[msg.sender] = balances[msg.sender].sub(sum);
            for(uint j=0;j<_to.length;j++){
              balances[_to[j]] = balances[_to[j]].add(_value[j]);
-             userdata[_to[j]].exists = true;
-             userdata[_to[j]].frozen_balance = userdata[_to[j]].frozen_balance.add(_value[j]);
-             userdata[_to[j]].lock_till = now.add((ldays.mul(86400)));
-             userdata[_to[j]].time_period = (period.mul(86400));
-             userdata[_to[j]].per_tp_release_amt = SafeMath.div(userdata[_to[j]].frozen_balance,(ldays.div(period)));
+             _oldData = userdata[_to[j]];
+             if(_oldData.exists == true){
+                 _oldFrozen = _oldData.frozen_balance;
+             }
+             userdata[_to[j]] = userstats({
+                exists: true,
+                frozen_balance: _oldFrozen.add(_value[j]),
+                lock_till: now.add((ldays.mul(86400))),
+                time_period: (period.mul(86400)),
+                per_tp_release_amt: SafeMath.div(SafeMath.add(_value[j],_oldFrozen),(ldays.div(period)))
+            });
              emit Transfer(msg.sender, _to[j], _value[j]);
            }
            return true;
-       } 
-       else { return false; }
+       }
+       else {return false;}
     }
    
     function approve(address _spender, uint256 _value) public returns (bool) {
@@ -203,76 +210,81 @@ contract StandardToken is Token {
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
-   
+
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
       
       if (balances[_from] >= _value &&  _value >= 0 && (allowed[_from][msg.sender] >= _value || _from==msg.sender)) {
+        
+          userstats memory _userData = userdata[_from];
           
-            if(userdata[_from].exists==false){
-                balances[_to] = balances[_to].add(_value);
-                if(_from!=msg.sender) allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
-                balances[_from] = balances[_from].sub(_value);
-                emit Transfer(_from, _to, _value);
+            if(_userData.exists==false){
+                _transfer(_from, _to, _value);
                 return true;
             }
             
-            uint lock = userdata[_from].lock_till;
+            uint lock = _userData.lock_till;
             
             if(now >= lock){
-                userdata[_from].frozen_balance = 0;
-                userdata[_from].exists = false;
-                balances[_to] = SafeMath.add(balances[_to],_value);
-                if(_from!=msg.sender) allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
-                balances[_from] = SafeMath.sub(balances[_from],_value);
-                emit Transfer(_from, _to, _value);
+                _userData.frozen_balance = 0;
+                _userData.exists = false;
+                userdata[_from] = _userData;
+                _transfer(_from, _to, _value);
                 return true;
             }
             
             uint256 a = (lock-now);
-            uint256 b = userdata[_from].time_period;
-            uint256 should_be_frozen = SafeMath.mul((SafeMath.div(a,b) + 1),userdata[_from].per_tp_release_amt);
+            uint256 b = _userData.time_period;
+            uint256 should_be_frozen = SafeMath.mul((SafeMath.div(a,b) + 1),_userData.per_tp_release_amt);
             
-            if(userdata[_from].frozen_balance > should_be_frozen){
-                userdata[_from].frozen_balance = should_be_frozen;
+            if(_userData.frozen_balance > should_be_frozen){
+                _userData.frozen_balance = should_be_frozen;
+                userdata[_from] = _userData;
             }
             
-            if(balances[_from].sub(_value)>=userdata[_from].frozen_balance){   
-                balances[_to] = balances[_to].add(_value);
-                if(_from!=msg.sender) allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
-                balances[_from] = balances[_from].sub(_value);
-                emit Transfer(_from, _to, _value);
-                return true;  
+            if(balances[_from].sub(_value)>=_userData.frozen_balance){
+                _transfer(_from, _to, _value);
+                return true;
             }
             
             return false;
-       } 
-       else { return false; }
+       }
+       else {return false;}
+   }
+   
+   function _transfer(address _from, address _to, uint256 _value) internal {
+       balances[_to] = balances[_to].add(_value);
+       if(_from!=msg.sender) allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
+       balances[_from] = balances[_from].sub(_value);
+       emit Transfer(_from, _to, _value);
    }
    
     function balanceOf(address _from) public view returns (uint256 balance) {
         return balances[_from];
     }
    
-    function frozenBalanceOf(address _from) public view returns (uint256 balance) {
-        if(userdata[_from].exists==false) return ;
+    function frozenBalanceOf(address _from) public returns (uint256 balance) {
+        userstats memory _userData = userdata[_from];
+        if(_userData.exists==false) return ;
         
-        uint lock = userdata[_from].lock_till;
+        uint lock = _userData.lock_till;
         
         if(now >= lock) {
-            userdata[_from].frozen_balance = 0;
-            userdata[_from].exists = false;
+            _userData.frozen_balance = 0;
+            _userData.exists = false;
+            userdata[_from] = _userData;
             return 0;
         }
         
         uint256 a = (lock-now);
-        uint256 b = userdata[_from].time_period;
-        uint256 should_be_frozen = SafeMath.mul((SafeMath.div(a,b) + 1),userdata[_from].per_tp_release_amt);
+        uint256 b = _userData.time_period;
+        uint256 should_be_frozen = SafeMath.mul((SafeMath.div(a,b) + 1),_userData.per_tp_release_amt);
             
-        if(userdata[_from].frozen_balance > should_be_frozen){
-            userdata[_from].frozen_balance = should_be_frozen;
+        if(_userData.frozen_balance > should_be_frozen){
+            _userData.frozen_balance = should_be_frozen;
+            userdata[_from] = _userData;
         }
         
-        return userdata[_from].frozen_balance;
+        return _userData.frozen_balance;
     }
    
     function lockTime(address _from) public view returns (uint256 time) {
@@ -318,13 +330,15 @@ contract StandardToken is Token {
         }
         if(tokens[token][msg.sender]>=value && value>0){
             orderId += 1;
-            subscriptiondata[orderId].exists = true;
-            subscriptiondata[orderId].value = value;
-            subscriptiondata[orderId].period = period;
-            subscriptiondata[orderId].lastPaidAt = now-period;
-            subscriptiondata[orderId].merchantAddress = merchantAddress;
-            subscriptiondata[orderId].customerAddress = customerAddress;
-            subscriptiondata[orderId].tokenType = token;
+            subscriptiondata[orderId] = subscriptionstats({
+                exists : true,
+                value: value,
+                period: period,
+                lastPaidAt: now-period,
+                merchantAddress: merchantAddress,
+                customerAddress: customerAddress,
+                tokenType: token
+            });
             subList[customerAddress].arr.push(orderId);
             emit Subscribe( orderId, merchantAddress, customerAddress, token, value, period );
             return orderId;
@@ -332,22 +346,25 @@ contract StandardToken is Token {
     }
     
     function charge(uint256 orderId) public _ifNotLocked returns (bool success){
-        require(subscriptiondata[orderId].exists == true, "This subscription does not exist, wrong orderId");
-        require(subscriptiondata[orderId].merchantAddress == msg.sender, "You are not the real merchant");
-        require(subscriptiondata[orderId].lastPaidAt+subscriptiondata[orderId].period <= now, "charged too early");
-        address token = subscriptiondata[orderId].tokenType;
-        tokens[token][subscriptiondata[orderId].customerAddress] = tokens[token][subscriptiondata[orderId].customerAddress].sub(subscriptiondata[orderId].value);
-        uint256 fee = ((subscriptiondata[orderId].value).mul(25)).div(10000);
+        subscriptionstats memory _orderData = subscriptiondata[orderId];
+        require(_orderData.exists == true, "This subscription does not exist, wrong orderId");
+        require(_orderData.merchantAddress == msg.sender, "You are not the real merchant");
+        require(_orderData.lastPaidAt+_orderData.period <= now, "charged too early");
+        address token = _orderData.tokenType;
+        tokens[token][_orderData.customerAddress] = tokens[token][_orderData.customerAddress].sub(_orderData.value);
+        uint256 fee = ((_orderData.value).mul(25)).div(10000);
         tokens[token][feeAccount] = SafeMath.add(tokens[token][feeAccount],fee);
-        tokens[token][subscriptiondata[orderId].merchantAddress] = tokens[token][subscriptiondata[orderId].merchantAddress].add((subscriptiondata[orderId].value.sub(fee)));
-        subscriptiondata[orderId].lastPaidAt = SafeMath.add(subscriptiondata[orderId].lastPaidAt,subscriptiondata[orderId].period);
+        tokens[token][_orderData.merchantAddress] = tokens[token][_orderData.merchantAddress].add((_orderData.value.sub(fee)));
+        _orderData.lastPaidAt = SafeMath.add(_orderData.lastPaidAt,_orderData.period);
+        subscriptiondata[orderId] = _orderData;
         emit Charge( orderId );
         return true;
     }
     
     function closeSubscription(uint256 orderId) public returns (bool success){
-        require(subscriptiondata[orderId].exists == true, "This subscription does not exist, wrong orderId OR already closed");
-        require(subscriptiondata[orderId].customerAddress == msg.sender, "You are not the customer of this orderId");
+        subscriptionstats memory _orderData = subscriptiondata[orderId];
+        require(_orderData.exists == true, "This subscription does not exist, wrong orderId OR already closed");
+        require(_orderData.customerAddress == msg.sender, "You are not the customer of this orderId");
         subscriptiondata[orderId].exists = false;
         return true;
     }
@@ -359,16 +376,22 @@ contract StandardToken is Token {
         if( TradeEngine(TradeEngineAddress).balanceOf(tokenGive,customerAddress)>=value ){
             require(TradeEngine(TradeEngineAddress).deductFee(customerAddress, usdt, uint(2*(10**usdtDecimal))),"fee not able to charge");
             sppID += 1;
-            sppSubscriptionStats[sppID].exists = true;
-            sppSubscriptionStats[sppID].customerAddress = customerAddress;
-            sppSubscriptionStats[sppID].tokenGet = tokenGet;
-            sppSubscriptionStats[sppID].tokenGive = tokenGive;
-            sppSubscriptionStats[sppID].value = value;
-            sppSubscriptionStats[sppID].remainingToBeFulfilled = value;
-            sppSubscriptionStats[sppID].period = period;
-            sppSubscriptionStats[sppID].lastPaidAt = now-period;
-            tokenStats[sppID].TokenToGet = tokenGet;
-            tokenStats[sppID].TokenToGive = tokenGive;
+            sppSubscriptionStats[sppID] = sppSubscribers({
+                exists: true,
+                customerAddress: customerAddress,
+                tokenGet: tokenGet,
+                tokenGive: tokenGive,
+                value: value,
+                remainingToBeFulfilled : value,
+                period: period,
+                lastPaidAt: now - period
+            });
+            tokenStats[sppID] = currentTokenStats({
+                TokenToGet : tokenGet,
+                TokenToGive: tokenGive,
+                amountGotten: 0,
+                amountGiven: 0
+            });
             sppSubList[customerAddress].arr.push(sppID);
             emit SubscribeToSpp( sppID, customerAddress, value, period, tokenGet, tokenGive );
             return sppID;
@@ -376,16 +399,17 @@ contract StandardToken is Token {
     }
     
     function chargeSpp(uint256 sppID, uint256 amountGet, uint256 amountGive, uint256 expires ) public _ownerOnly _ifNotLocked {
-        require(amountGive==sppSubscriptionStats[sppID].remainingToBeFulfilled,"check");
+        sppSubscribers memory _subscriptionData = sppSubscriptionStats[sppID];
+        require(amountGive==_subscriptionData.remainingToBeFulfilled,"check");
         require(onGoing[sppID]<block.number,"chargeSpp is already onGoing for this sppId");
-        require(sppSubscriptionStats[sppID].exists==true,"This SPP does not exist, wrong SPP ID");
-        require(sppSubscriptionStats[sppID].lastPaidAt+sppSubscriptionStats[sppID].period<=now,"Charged too early");
-        require(TradeEngine(TradeEngineAddress).deductFee(sppSubscriptionStats[sppID].customerAddress, usdt, uint(2*rateTrxUsdt)),"fee unable to charge");// need to multiply with 10^8??
+        require(_subscriptionData.exists==true,"This SPP does not exist, wrong SPP ID");
+        require(_subscriptionData.lastPaidAt+_subscriptionData.period<=now,"Charged too early");
+        require(TradeEngine(TradeEngineAddress).deductFee(_subscriptionData.customerAddress, usdt, uint(2*rateTrxUsdt)),"fee unable to charge");// need to multiply with 10^8??
         nonce += 1;
-        bytes32 hash = sha256(TradeEngineAddress, sppSubscriptionStats[sppID].tokenGet, amountGet , sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce);
+        bytes32 hash = sha256(abi.encodePacked(TradeEngineAddress, _subscriptionData.tokenGet, amountGet , _subscriptionData.tokenGive, amountGive, block.number+expires, nonce));
         hash2sppId[hash] = sppID;
         onGoing[sppID] = block.number+expires;
-        TradeEngine(TradeEngineAddress).orderBNS(sppSubscriptionStats[sppID].tokenGet, amountGet, sppSubscriptionStats[sppID].tokenGive, amountGive, block.number+expires, nonce, sppSubscriptionStats[sppID].customerAddress);
+        TradeEngine(TradeEngineAddress).orderBNS(_subscriptionData.tokenGet, amountGet, _subscriptionData.tokenGive, amountGive, block.number+expires, nonce, _subscriptionData.customerAddress);
         emit ChargeSpp( sppID, (block.number + expires), nonce);
         
     }
@@ -397,15 +421,13 @@ contract StandardToken is Token {
         return true;
     }
     
-    function setrateTrxUsdt(uint256 _value) public _ownerOnly returns(bool res){
+    function setrateTrxUsdt(uint256 _value) public _ownerOnly{
         rateTrxUsdt = _value;
-        return true;
     }
     
-    function setAddresses(address usdt1, address feeAccount1) public _ownerOnly returns (bool res){
+    function setAddresses(address usdt1, address feeAccount1) public _ownerOnly{
       usdt = usdt1;
       feeAccount = feeAccount1;
-      return true;
     }
     
     function setUsdtDecimal(uint256 decimal) public _ownerOnly{
@@ -416,10 +438,16 @@ contract StandardToken is Token {
         minPeriod = p;
     } 
     
+    function setTradeEngineAddress(address _add) public _ownerOnly{
+        TradeEngineAddress = _add;
+    }
+    
     function setLastPaidAt(bytes32 hash) public returns(bool success){
         if(msg.sender!=TradeEngineAddress) return false;
-        if ( (now - (sppSubscriptionStats[hash2sppId[hash]].lastPaidAt + sppSubscriptionStats[hash2sppId[hash]].period))<14400 ){
-            sppSubscriptionStats[hash2sppId[hash]].lastPaidAt = sppSubscriptionStats[hash2sppId[hash]].lastPaidAt.add(sppSubscriptionStats[hash2sppId[hash]].period);
+        uint256 sppID = hash2sppId[hash];
+        sppSubscribers memory _subscriptionData = sppSubscriptionStats[sppID];
+        if ( (now - (_subscriptionData.lastPaidAt + _subscriptionData.period))<14400 ){
+            sppSubscriptionStats[hash2sppId[hash]].lastPaidAt = _subscriptionData.lastPaidAt.add(_subscriptionData.period);
         }
         else{
             sppSubscriptionStats[hash2sppId[hash]].lastPaidAt = now;
@@ -427,25 +455,24 @@ contract StandardToken is Token {
         return true;
     }
     
-    function setTradeEngineAddress(address _add) public _ownerOnly returns (bool success){
-        TradeEngineAddress = _add;
-        return true;
-    }
-    
     function setRemainingToBeFulfilled(bytes32 hash, uint256 amt) public returns(bool success){
         if(msg.sender!=TradeEngineAddress) return false;
-        if((sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled == amt)) sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled = sppSubscriptionStats[hash2sppId[hash]].value;
+        uint256 sppID = hash2sppId[hash];
+        sppSubscribers memory _subscriptionData = sppSubscriptionStats[sppID];
+        if((_subscriptionData.remainingToBeFulfilled == amt)) sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled = _subscriptionData.value;
         else{
-            sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled = sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled.sub(amt);
+            sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled = _subscriptionData.remainingToBeFulfilled.sub(amt);
         }
         return true;
     }
     
     function setcurrentTokenStats(bytes32 hash, uint256 amountGotten, uint256 amountGiven) public returns (bool success){
         if(msg.sender!=TradeEngineAddress) return false;
-        tokenStats[hash2sppId[hash]].amountGotten = tokenStats[hash2sppId[hash]].amountGotten.add(amountGotten);
-        tokenStats[hash2sppId[hash]].amountGiven = tokenStats[hash2sppId[hash]].amountGiven.add(amountGiven);
-        emit SetCurrentTokenStats(hash2sppId[hash], amountGotten, amountGiven);
+        uint256 sppID = hash2sppId[hash];
+        currentTokenStats memory _tokenStats = tokenStats[sppID];
+        tokenStats[sppID].amountGotten = _tokenStats.amountGotten.add(amountGotten);
+        tokenStats[sppID].amountGiven = _tokenStats.amountGiven.add(amountGiven);
+        emit SetCurrentTokenStats(sppID, amountGotten, amountGiven);
         return true;
     }
     
@@ -462,7 +489,6 @@ contract StandardToken is Token {
     }
     
     function getRemainingToBeFulfilledByHash(bytes32 hash) public _tradeEngineOnly returns(uint256 res){
-        // if(msg.sender!=TradeEngineAddress) return;
         return sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled;
     }
     
@@ -569,7 +595,7 @@ contract StandardToken is Token {
     uint256 public minPeriod;
 }
 
-contract CoinBNS is StandardToken {
+contract CoinBNS is BNSToken {
   function () public {
       revert();
   }
