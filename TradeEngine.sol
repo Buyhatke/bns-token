@@ -381,7 +381,7 @@ contract TradeEngine {
                         amount,
                         satisfied
                     ),
-                    "fail"
+                    "fail7"
                 );
                 flag = 0;
             } else {
@@ -391,7 +391,7 @@ contract TradeEngine {
                         amount - feeTokenGet,
                         satisfied
                     ),
-                    "fail"
+                    "fail8"
                 );
             }
         }
@@ -589,9 +589,9 @@ contract TradeEngine {
             rateToken[bnsAddress]
         );
 
-        if (tokens[bnsAddress][payer] >= eqvltBNS) {
+        feeBNS = ((eqvltBNS * (100 - (discount / 100000000))) / 100);
+        if (tokens[bnsAddress][payer] >= feeBNS) {
             flag = 1;
-            feeBNS = ((eqvltBNS * (100 - (discount / 100000000))) / 100);
             _deduct(payer, bnsAddress, feeBNS);
             return true;
         } else {
