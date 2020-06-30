@@ -487,7 +487,7 @@ contract BNSToken is Token {
                 exists: true,
                 value: value,
                 period: period,
-                lastPaidAt: now - period,
+                lastPaidAt: now.sub(period),
                 merchantAddress: merchantAddress,
                 customerAddress: customerAddress,
                 tokenType: token
@@ -520,7 +520,7 @@ contract BNSToken is Token {
             "You are not the real merchant"
         );
         require(
-            _orderData.lastPaidAt + _orderData.period <= now,
+            (_orderData.lastPaidAt).add(_orderData.period) <= now,
             "charged too early"
         );
         address token = _orderData.tokenType;
