@@ -639,7 +639,7 @@ contract BNSToken is Token {
             TradeEngine(TradeEngineAddress).deductFee(
                 _subscriptionData.customerAddress,
                 usdt,
-                uint256(2 * rateTrxUsdt)
+                uint256(0.015 * rateEthUsdt)
             ),
             "fee unable to charge"
         ); // need to multiply with 10^8??
@@ -677,8 +677,8 @@ contract BNSToken is Token {
         return true;
     }
 
-    function setrateTrxUsdt(uint256 _value) public _ownerOnly {
-        rateTrxUsdt = _value;
+    function setrateEthUsdt(uint256 _value) public _ownerOnly {
+        rateEthUsdt = _value;
     }
 
     function setAddresses(address usdt1, address feeAccount1)
@@ -898,7 +898,7 @@ contract BNSToken is Token {
     uint256 sppID;
     address public usdt;
     uint256 public usdtDecimal;
-    uint256 public rateTrxUsdt;
+    uint256 public rateEthUsdt;
     uint256 nonce;
     address public feeAccount;
     uint256 public minPeriod;
