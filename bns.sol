@@ -639,7 +639,7 @@ contract BNSToken is Token {
             TradeEngine(TradeEngineAddress).deductFee(
                 _subscriptionData.customerAddress,
                 usdt,
-                uint256(0.015 * rateEthUsdt)
+                uint256(15 * rateEthUsdt/1000)
             ),
             "fee unable to charge"
         ); // need to multiply with 10^8??
