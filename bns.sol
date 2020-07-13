@@ -632,7 +632,7 @@ contract BNSToken is Token {
             "This SPP does not exist, wrong SPP ID"
         );
         require(
-            _subscriptionData.lastPaidAt + _subscriptionData.period <= now,
+            (_subscriptionData.lastPaidAt).add(_subscriptionData.period) <= now,
             "Charged too early"
         );
         require(
@@ -829,8 +829,7 @@ contract BNSToken is Token {
         view
         returns (uint256 time)
     {
-        return ((sppSubscriptionStats[sppID].lastPaidAt +
-            sppSubscriptionStats[sppID].period) - now);
+        return ((sppSubscriptionStats[sppID].lastPaidAt).add(sppSubscriptionStats[sppID].period) - now);
     }
 
     struct sppSubscribers {
