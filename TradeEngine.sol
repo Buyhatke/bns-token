@@ -11,11 +11,7 @@ library SafeMath {
         return sub(a, b, "SafeMath: subtraction overflow");
     }
 
-    function sub(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
+    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         require(b <= a, errorMessage);
         uint256 c = a - b;
         return c;
@@ -34,11 +30,7 @@ library SafeMath {
         return div(a, b, "SafeMath: division by zero");
     }
 
-    function div(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
+    function div(uint256 a, uint256 b,string memory errorMessage) internal pure returns (uint256) {
         // Solidity only automatically asserts when dividing by 0
         require(b > 0, errorMessage);
         uint256 c = a / b;
@@ -50,11 +42,7 @@ library SafeMath {
         return mod(a, b, "SafeMath: modulo by zero");
     }
 
-    function mod(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
+    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         require(b != 0, errorMessage);
         return a % b;
     }
@@ -63,31 +51,17 @@ library SafeMath {
 contract Token {
     function transfer(address, uint256) public returns (bool) {}
 
-    function transferFrom(
-        address,
-        address,
-        uint256
-    ) public returns (bool) {}
+    function transferFrom(address, address, uint256) public returns (bool) {}
 
     function getSppIdFromHash(bytes32) public returns (uint256) {}
 
     function setLastPaidAt(bytes32) public returns (bool) {}
 
-    function setRemainingToBeFulfilled(bytes32, uint256)
-        public
-        returns (bool)
-    {}
+    function setRemainingToBeFulfilled(bytes32, uint256) public returns (bool) {}
 
-    function getRemainingToBeFulfilledByHash(bytes32)
-        public
-        returns (uint256)
-    {}
+    function getRemainingToBeFulfilledByHash(bytes32) public returns (uint256) {}
 
-    function setcurrentTokenStats(
-        bytes32,
-        uint256,
-        uint256
-    ) public returns (bool) {}
+    function setcurrentTokenStats(bytes32, uint256, uint256) public returns (bool) {}
 
     uint256 public decimals;
     string public name;
@@ -112,49 +86,12 @@ contract TradeEngine {
     mapping(address => uint256) public rateToken;
     mapping(address => bool) public dontTakeFeeInBns;
 
-    event Order(
-        address indexed tokenGet,
-        uint256 amountGet,
-        address indexed tokenGive,
-        uint256 amountGive,
-        uint256 expires,
-        uint256 nonce,
-        address indexed user
-    );
-    event Cancel(
-        address indexed tokenGet,
-        uint256 amountGet,
-        address indexed tokenGive,
-        uint256 amountGive,
-        uint256 expires,
-        uint256 nonce,
-        address indexed user
-    );
-    event Trade(
-        address indexed tokenGet,
-        uint256 amountGet,
-        address tokenGive,
-        uint256 amountGive,
-        address indexed get,
-        address indexed give
-    );
-    event Deposit(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint256 balance
-    );
-    event Withdraw(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint256 balance
-    );
-    event DeductFee(
-        address indexed payer,
-        address indexed token,
-        uint256 amount
-    );
+    event Order(address indexed tokenGet,uint256 amountGet,address indexed tokenGive,uint256 amountGive,uint256 expires,uint256 nonce,address indexed user);
+    event Cancel(address indexed tokenGet,uint256 amountGet,address indexed tokenGive,uint256 amountGive,uint256 expires,uint256 nonce,address indexed user);
+    event Trade(address indexed tokenGet,uint256 amountGet,address tokenGive,uint256 amountGive,address indexed get,address indexed give);
+    event Deposit(address indexed token,address indexed user,uint256 amount,uint256 balance);
+    event Withdraw(address indexed token,address indexed user,uint256 amount,uint256 balance);
+    event DeductFee(address indexed payer,address indexed token,uint256 amount);
 
     constructor() public {
         admin = msg.sender;
@@ -206,369 +143,120 @@ contract TradeEngine {
         //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
         if (token == 0) revert();
         if (!Token(token).transferFrom(msg.sender, this, amount)) revert();
-        tokens[token][msg.sender] = SafeMath.add(
-            tokens[token][msg.sender],
-            amount
-        );
+        tokens[token][msg.sender] = SafeMath.add(tokens[token][msg.sender],amount);
         emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
     }
 
     function withdrawToken(address token, uint256 amount) public {
         if (token == 0) revert();
         if (tokens[token][msg.sender] < amount) revert();
-        tokens[token][msg.sender] = SafeMath.sub(
-            tokens[token][msg.sender],
-            amount
-        );
+        tokens[token][msg.sender] = SafeMath.sub(tokens[token][msg.sender],amount);
         if (!Token(token).transfer(msg.sender, amount)) revert();
         emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
     }
 
-    function balanceOf(address token, address user)
-        public
-        view
-        returns (uint256 balance)
-    {
+    function balanceOf(address token, address user) public view returns (uint256 balance) {
         return tokens[token][user];
     }
 
-    function order(
-        address tokenGet,
-        uint256 amountGet,
-        address tokenGive,
-        uint256 amountGive,
-        uint256 expires,
-        uint256 nonce
-    ) public _ifNotLocked {
-        bytes32 hash = sha256(
-            abi.encodePacked(
-                this,
-                tokenGet,
-                amountGet,
-                tokenGive,
-                amountGive,
-                expires,
-                nonce
-            )
-        );
+    function order(address tokenGet, uint256 amountGet, address tokenGive, uint256 amountGive, uint256 expires, uint256 nonce) public _ifNotLocked {
+        bytes32 hash = sha256(abi.encodePacked(this,tokenGet,amountGet,tokenGive,amountGive,expires,nonce));
         orders[msg.sender][hash] = true;
-        emit Order(
-            tokenGet,
-            amountGet,
-            tokenGive,
-            amountGive,
-            expires,
-            nonce,
-            msg.sender
-        );
+        emit Order(tokenGet,amountGet,tokenGive,amountGive,expires,nonce,msg.sender);
     }
 
-    function orderBNS(
-        address tokenGet,
-        uint256 amountGet,
-        address tokenGive,
-        uint256 amountGive,
-        uint256 expires,
-        uint256 nonce,
-        address customerAddress
-    ) public returns (bool success) {
+    function orderBNS(address tokenGet,uint256 amountGet,address tokenGive,uint256 amountGive,uint256 expires,uint256 nonce,address customerAddress) public returns (bool success) {
         if (msg.sender != bnsAddress) {
             return false;
         }
-        bytes32 hash = sha256(
-            abi.encodePacked(
-                this,
-                tokenGet,
-                amountGet,
-                tokenGive,
-                amountGive,
-                expires,
-                nonce
-            )
-        );
+        bytes32 hash = sha256(abi.encodePacked(this,tokenGet,amountGet,tokenGive,amountGive,expires,nonce));
         orders[customerAddress][hash] = true;
-        emit Order(
-            tokenGet,
-            amountGet,
-            tokenGive,
-            amountGive,
-            expires,
-            nonce,
-            customerAddress
-        );
+        emit Order(tokenGet,amountGet,tokenGive,amountGive,expires,nonce,customerAddress);
         return true;
     }
 
-    function trade(
-        address tokenGet,
-        uint256 amountGet,
-        address tokenGive,
-        uint256 amountGive,
-        uint256 expires,
-        uint256 nonce,
-        address user,
-        uint256 amount
-    ) public _ifNotLocked {
-        bytes32 hash = sha256(
-            abi.encodePacked(
-                this,
-                tokenGet,
-                amountGet,
-                tokenGive,
-                amountGive,
-                expires,
-                nonce
-            )
-        );
+    function trade(address tokenGet,uint256 amountGet,address tokenGive,uint256 amountGive,uint256 expires,uint256 nonce,address user,uint256 amount) public _ifNotLocked {
+        bytes32 hash = sha256(abi.encodePacked(this,tokenGet,amountGet,tokenGive,amountGive,expires,nonce));
         if (
-            !(orders[user][hash] &&
-                block.number <= expires &&
-                SafeMath.add(orderFills[user][hash], amount) <= amountGet)
-        ) revert();
-        tradeBalances(
-            tokenGet,
-            amountGet,
-            tokenGive,
-            amountGive,
-            user,
-            amount,
-            hash
-        );
+            !(orders[user][hash] && block.number <= expires && SafeMath.add(orderFills[user][hash], amount) <= amountGet)) revert();
+        tradeBalances(tokenGet,amountGet,tokenGive,amountGive,user,amount,hash);
         orderFills[user][hash] = SafeMath.add(orderFills[user][hash], amount);
-        emit Trade(
-            tokenGet,
-            amount,
-            tokenGive,
-            (amountGive * amount) / amountGet,
-            user,
-            msg.sender
-        );
+        emit Trade(tokenGet,amount,tokenGive,(amountGive * amount) / amountGet,user,msg.sender);
     }
 
-    function tradeBalances(
-        address tokenGet,
-        uint256 amountGet,
-        address tokenGive,
-        uint256 amountGive,
-        address user,
-        uint256 amount,
-        bytes32 hash
-    ) private {
-        uint256 satisfied = SafeMath.div(
-            SafeMath.mul(amountGive, amount),
-            amountGet
-        );
+    function tradeBalances(address tokenGet,uint256 amountGet,address tokenGive,uint256 amountGive,address user,uint256 amount,bytes32 hash) private {
+        uint256 satisfied = SafeMath.div(SafeMath.mul(amountGive, amount),amountGet);
         uint256 feeTokenGet = (amount * fee) / 10000;
         uint256 feeTokenGive = (satisfied * fee) / 10000;
         flag = 0;
 
-        tokens[tokenGet][msg.sender] = SafeMath.sub(
-            tokens[tokenGet][msg.sender],
-            amount
-        );
+        tokens[tokenGet][msg.sender] = SafeMath.sub(tokens[tokenGet][msg.sender],amount);
         tokens[tokenGet][user] = SafeMath.add(tokens[tokenGet][user], amount);
 
-        require(
-            TradeEngine(this).deductFee(user, tokenGet, feeTokenGet),
-            "unable to charge fee 1"
-        );
+        require(TradeEngine(this).deductFee(user, tokenGet, feeTokenGet),"unable to charge fee 1");
 
         if (Token(bnsAddress).getSppIdFromHash(hash) != 0) {
             if (flag == 1) {
-                require(
-                    Token(bnsAddress).setcurrentTokenStats(
-                        hash,
-                        amount,
-                        satisfied
-                    ),
-                    "fail7"
-                );
+                require(Token(bnsAddress).setcurrentTokenStats(hash,amount,satisfied),"fail7");
                 flag = 0;
             } else {
-                require(
-                    Token(bnsAddress).setcurrentTokenStats(
-                        hash,
-                        amount - feeTokenGet,
-                        satisfied
-                    ),
-                    "fail8"
-                );
+                require(Token(bnsAddress).setcurrentTokenStats(hash,amount - feeTokenGet,satisfied),"fail8");
             }
         }
 
-        tokens[tokenGive][user] = SafeMath.sub(
-            tokens[tokenGive][user],
-            satisfied
-        );
-        tokens[tokenGive][msg.sender] = SafeMath.add(
-            tokens[tokenGive][msg.sender],
-            satisfied
-        );
+        tokens[tokenGive][user] = SafeMath.sub(tokens[tokenGive][user],satisfied);
+        tokens[tokenGive][msg.sender] = SafeMath.add(tokens[tokenGive][msg.sender],satisfied);
 
-        require(
-            TradeEngine(this).deductFee(msg.sender, tokenGive, feeTokenGive),
-            "unable to charge fee 2"
-        );
+        require(TradeEngine(this).deductFee(msg.sender, tokenGive, feeTokenGive),"unable to charge fee 2");
         flag = 0;
 
         if (Token(bnsAddress).getSppIdFromHash(hash) != 0) {
-            if (
-                Token(bnsAddress).getRemainingToBeFulfilledByHash(hash) ==
-                satisfied
-            ) {
+            if (Token(bnsAddress).getRemainingToBeFulfilledByHash(hash) == satisfied) {
                 require(Token(bnsAddress).setLastPaidAt(hash), "fail1");
                 // require(Token(bnsAddress).setOnGoing(hash),"fail2");
-                require(
-                    Token(bnsAddress).setRemainingToBeFulfilled(
-                        hash,
-                        satisfied
-                    ),
-                    "fail3"
-                );
+                require(Token(bnsAddress).setRemainingToBeFulfilled(hash,satisfied),"fail3");
             } else {
-                require(
-                    Token(bnsAddress).setRemainingToBeFulfilled(
-                        hash,
-                        satisfied
-                    ),
-                    "fail4"
-                );
+                require(Token(bnsAddress).setRemainingToBeFulfilled(hash,satisfied),"fail4");
             }
         }
     }
 
-    function testTrade(
-        address tokenGet,
-        uint256 amountGet,
-        address tokenGive,
-        uint256 amountGive,
-        uint256 expires,
-        uint256 nonce,
-        address user,
-        uint256 amount,
-        address sender
-    ) public view returns (bool) {
-        if (
-            !(block.number <= expires &&
-                tokens[tokenGet][sender] >= amount &&
-                availableVolume(
-                    tokenGet,
-                    amountGet,
-                    tokenGive,
-                    amountGive,
-                    expires,
-                    nonce,
-                    user
-                ) >=
-                amount)
-        ) return false;
+    function testTrade(address tokenGet,uint256 amountGet,address tokenGive,uint256 amountGive,uint256 expires,uint256 nonce,address user,uint256 amount,address sender) public view returns (bool) {
+        if (!(block.number <= expires && tokens[tokenGet][sender] >= amount && availableVolume(tokenGet,amountGet,tokenGive,amountGive,expires,nonce,user) >= amount)) return false;
         return true;
     }
 
-    function availableVolume(
-        address tokenGet,
-        uint256 amountGet,
-        address tokenGive,
-        uint256 amountGive,
-        uint256 expires,
-        uint256 nonce,
-        address user
-    ) public view returns (uint256) {
-        bytes32 hash = sha256(
-            abi.encodePacked(
-                this,
-                tokenGet,
-                amountGet,
-                tokenGive,
-                amountGive,
-                expires,
-                nonce
-            )
-        );
+    function availableVolume(address tokenGet,uint256 amountGet,address tokenGive,uint256 amountGive,uint256 expires,uint256 nonce,address user) public view returns (uint256) {
+        bytes32 hash = sha256(abi.encodePacked(this,tokenGet,amountGet,tokenGive,amountGive,expires,nonce));
         if (!(orders[user][hash] && block.number <= expires)) return 0;
         uint256 available1 = SafeMath.sub(amountGet, orderFills[user][hash]);
-        uint256 available2 = SafeMath.mul(tokens[tokenGive][user], amountGet) /
-            amountGive;
+        uint256 available2 = SafeMath.mul(tokens[tokenGive][user], amountGet) /amountGive;
         if (available1 < available2) return available1;
         return available2;
     }
 
-    function amountFilled(
-        address tokenGet,
-        uint256 amountGet,
-        address tokenGive,
-        uint256 amountGive,
-        uint256 expires,
-        uint256 nonce,
-        address user
-    ) public view returns (uint256) {
-        bytes32 hash = sha256(
-            abi.encodePacked(
-                this,
-                tokenGet,
-                amountGet,
-                tokenGive,
-                amountGive,
-                expires,
-                nonce
-            )
-        );
+    function amountFilled(address tokenGet,uint256 amountGet,address tokenGive,uint256 amountGive,uint256 expires,uint256 nonce,address user) public view returns (uint256) {
+        bytes32 hash = sha256(abi.encodePacked(this,tokenGet,amountGet,tokenGive,amountGive,expires,nonce));
         return orderFills[user][hash];
     }
 
-    function cancelOrder(
-        address tokenGet,
-        uint256 amountGet,
-        address tokenGive,
-        uint256 amountGive,
-        uint256 expires,
-        uint256 nonce
-    ) public {
-        bytes32 hash = sha256(
-            abi.encodePacked(
-                this,
-                tokenGet,
-                amountGet,
-                tokenGive,
-                amountGive,
-                expires,
-                nonce
-            )
-        );
+    function cancelOrder(address tokenGet,uint256 amountGet,address tokenGive,uint256 amountGive,uint256 expires,uint256 nonce) public {
+        bytes32 hash = sha256(abi.encodePacked(this,tokenGet,amountGet,tokenGive,amountGive,expires,nonce));
         if (!orders[msg.sender][hash]) revert();
         orderFills[msg.sender][hash] = amountGet;
         orders[msg.sender][hash] = false;
         // if(Token(bnsAddress).getSppIdFromHash(hash)!=0) require(Token(bnsAddress).setOnGoing(hash),"fail6");
-        emit Cancel(
-            tokenGet,
-            amountGet,
-            tokenGive,
-            amountGive,
-            expires,
-            nonce,
-            msg.sender
-        );
+        emit Cancel(tokenGet,amountGet,tokenGive,amountGive,expires,nonce,msg.sender);
     }
 
-    function _deduct(
-        address _payer,
-        address _token,
-        uint256 _amount
-    ) internal {
+    function _deduct(address _payer,address _token,uint256 _amount) internal {
         tokens[_token][_payer] = tokens[_token][_payer].sub(_amount);
         tokens[_token][feeAccount] = tokens[_token][feeAccount].add(_amount);
         emit DeductFee(_payer, _token, _amount);
     }
 
-    function deductFee(
-        address payer,
-        address token,
-        uint256 amount
-    ) public returns (bool res) {
-        require(
-            (msg.sender == address(this) || msg.sender == bnsAddress),
-            "this can only be called by bnsAddress or this contract"
-        );
+    function deductFee(address payer,address token,uint256 amount) public returns (bool res) {
+        require((msg.sender == address(this) || msg.sender == bnsAddress),"this can only be called by bnsAddress or this contract");
 
         if (dontTakeFeeInBns[payer] == true) {
             _deduct(payer, token, amount);
@@ -578,16 +266,7 @@ contract TradeEngine {
         uint256 eqvltBNS;
         uint256 feeBNS;
 
-        eqvltBNS = SafeMath.div(
-            SafeMath.div(
-                SafeMath.mul(
-                    SafeMath.mul(amount, rateToken[token]),
-                    10**Token(bnsAddress).decimals()
-                ),
-                10**Token(token).decimals()
-            ),
-            rateToken[bnsAddress]
-        );
+        eqvltBNS = SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.mul(amount, rateToken[token]),10**Token(bnsAddress).decimals()),10**Token(token).decimals()),rateToken[bnsAddress]);
 
         feeBNS = ((eqvltBNS * (100 - (discount / 100000000))) / 100);
         if (tokens[bnsAddress][payer] >= feeBNS) {
@@ -602,19 +281,14 @@ contract TradeEngine {
         return false;
     }
 
-    function setAddresses(address usdt1, address feeAccount1)
-        public
-        _ownerOnly
+    function setAddresses(address usdt1, address feeAccount1) public _ownerOnly
     {
         usdt = usdt1;
         feeAccount = feeAccount1;
     }
 
     function setDiscount() public _ownerOnly {
-        require(
-            now >= discountLockTill,
-            "too early to change discount rate..."
-        );
+        require(now >= discountLockTill,"too early to change discount rate...");
         discount = SafeMath.div(discount, 2);
         discountLockTill = SafeMath.add(discountLockTill, (365 * 86400));
     }
