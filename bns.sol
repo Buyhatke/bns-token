@@ -98,6 +98,10 @@ abstract contract Token {
     function setcurrentTokenStats(bytes32, uint256, uint256) public virtual returns (bool) {}
 
     function getRemainingToBeFulfilledBySppID(uint256)public virtual view returns (uint256) {}
+    
+    function deposit(address user, bytes calldata depositData) virtual external {}
+    
+    function _msgSender() internal virtual view returns (address payable) {}
 }
 
 contract BNSToken is Token {
@@ -112,7 +116,7 @@ contract BNSToken is Token {
     event CloseSpp(uint256 sppID);
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender,uint256 value);
-    // event Mint(string hash, address indexed account, uint256 value);
+    event Mint(address indexed account, uint256 value);
     event SetCurrentTokenStats( uint256 indexed sppID, uint256 amountGotten,uint256 amountGiven);
 
     modifier _ownerOnly() {
@@ -122,6 +126,11 @@ contract BNSToken is Token {
 
     modifier _tradeEngineOnly() {
         require(msg.sender == TradeEngineAddress);
+        _;
+    }
+    
+    modifier _childTokenOnly() {
+        require(msg.sender == ChildTokenAddress);
         _;
     }
 
@@ -144,19 +153,51 @@ contract BNSToken is Token {
         if (potentialAdmin == msg.sender) owner = msg.sender;
     }
 
-    // function mint(string memory hash, address account, uint256 value) public _ownerOnly {
-    //     require(account != address(0));
-    //     require(SafeMath.add(totalSupply, value) <= totalPossibleSupply,"totalSupply can't be more than the totalPossibleSupply");
-    //     totalSupply = SafeMath.add(totalSupply, value);
-    //     balances[account] = SafeMath.add(balances[account], value);
-    //     emit Mint(hash, account, value);
-    // }
+    function _mint(address account, uint256 value) internal _childTokenOnly {
+        require(account != address(0));
+        require(SafeMath.add(totalSupply, value) <= totalPossibleSupply,"totalSupply can't be more than the totalPossibleSupply");
+        totalSupply = SafeMath.add(totalSupply, value);
+        balances[account] = SafeMath.add(balances[account], value);
+        emit Transfer(address(0), account, value);
+    }
 
-    // function burn(uint256 value) public _ownerOnly {
-    //     totalSupply = totalSupply.sub(value);
-    //     balances[msg.sender] = balances[msg.sender].sub(value);
-    //     emit Transfer(msg.sender, address(0), value);
-    // }
+    function _burn(address account, uint256 amount) internal virtual {
+        require(account != address(0), "ERC20: burn from the zero address");
+
+        // _beforeTokenTransfer(account, address(0), amount);
+
+        balances[account] = balances[account].sub(amount, "ERC20: burn amount exceeds balance");
+        totalSupply = totalSupply.sub(amount);
+        emit Transfer(account, address(0), amount);
+    }
+    
+    function deposit(address user, bytes calldata depositData) external override _childTokenOnly
+    {
+        uint256 amount = abi.decode(depositData, (uint256));
+        _mint(user, amount);
+    }
+    
+    function withdraw(uint256 amount) external {
+        _burn(_msgSender(), amount);
+    }
+    
+    function _msgSender() internal override view returns (address payable sender)
+    {
+        if (msg.sender == address(this)) {
+            bytes memory array = msg.data;
+            uint256 index = msg.data.length;
+            assembly {
+                // Load the 32 bytes word from memory with the address on the lower 20 bytes, and mask those.
+                sender := and(
+                    mload(add(array, index)),
+                    0xffffffffffffffffffffffffffffffffffffffff
+                )
+            }
+        } else {
+            sender = msg.sender;
+        }
+        return sender;
+    }
 
     function transfer(address _to, uint256 _value) public override returns (bool success)
     {
@@ -294,12 +335,12 @@ contract BNSToken is Token {
         return userdata[_from].lock_till;
     }
 
-    function deposit() public payable {
+    function depositETH() public payable {
         tokens[address(0)][msg.sender] = SafeMath.add(tokens[address(0)][msg.sender], msg.value);
         emit Deposit(address(0), msg.sender, msg.value, tokens[address(0)][msg.sender]);
     }
 
-    function withdraw(uint256 amount) public {
+    function withdrawETH(uint256 amount) public {
         if (tokens[address(0)][msg.sender] < amount) revert();
         tokens[address(0)][msg.sender] = SafeMath.sub(tokens[address(0)][msg.sender], amount);
         (bool success,) = msg.sender.call{value:amount}("");
@@ -585,12 +626,13 @@ contract BNSToken is Token {
         bool exists;
     }
 
-    // uint256 public totalSupply;
-    // uint256 public totalPossibleSupply;
+    uint256 public totalSupply;
+    uint256 public totalPossibleSupply;
     uint256 public orderId;
     address public owner;
     address private potentialAdmin;
     address public TradeEngineAddress;
+    address public ChildTokenAddress;
     uint256 sppID;
     address public usdt;
     uint256 public usdtDecimal;
@@ -601,9 +643,6 @@ contract BNSToken is Token {
 }
 
 contract CoinBNS is BNSToken {
-    // function() public {
-    //     revert();
-    // }
     event Received(address, uint);
     receive() external payable { 
         emit Received(msg.sender, msg.value);
@@ -615,10 +654,11 @@ contract CoinBNS is BNSToken {
     string public version = "H1.0";
 
     constructor() public {
+        ChildTokenAddress = ; // this needs to be filled
         owner = msg.sender;
-        // balances[msg.sender] = 250000000000000000;
-        // totalSupply = 250000000000000000;
-        // totalPossibleSupply = 250000000000000000;
+        balances[msg.sender] = 0;
+        totalSupply = 0;
+        totalPossibleSupply = 250000000000000000;
         name = "BNS Token";
         decimals = 8;
         symbol = "BNS";
