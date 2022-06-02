@@ -1,926 +1,806 @@
-pragma solidity ^0.4.24;
+// SPDX-License-Identifier: MIT
 
-library SafeMath {
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a, "SafeMath: addition overflow");
-        return c;
-    }
+pragma solidity ^0.8.4;
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        return sub(a, b, "SafeMath: subtraction overflow");
-    }
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20 {
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
 
-    function sub(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
-        require(b <= a, errorMessage);
-        uint256 c = a - b;
-        return c;
-    }
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
 
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        require(c / a == b, "SafeMath: multiplication overflow");
-        return c;
-    }
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `recipient`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address recipient, uint256 amount) external returns (bool);
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        return div(a, b, "SafeMath: division by zero");
-    }
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
 
-    function div(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
-        // Solidity only automatically asserts when dividing by 0
-        require(b > 0, errorMessage);
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
 
-    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        return mod(a, b, "SafeMath: modulo by zero");
-    }
-
-    function mod(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
-        require(b != 0, errorMessage);
-        return a % b;
-    }
-}
-
-contract TradeEngine {
-    function balanceOf(address, address) public view returns (uint256) {}
-
-    function orderBNS(
-        address,
-        uint256,
-        address,
-        uint256,
-        uint256,
-        uint256,
-        address
-    ) public returns (bool) {}
-
-    function deductFee(
-        address,
-        address,
-        uint256
-    ) public returns (bool) {}
-}
-
-contract Token {
-    function tokenBalanceOf(address, address) public view returns (uint256) {}
-
-    function balanceOf(address) public view returns (uint256) {}
-
-    function transfer(address, uint256) public returns (bool) {}
-
+    /**
+     * @dev Moves `amount` tokens from `sender` to `recipient` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
     function transferFrom(
-        address,
-        address,
-        uint256
-    ) public returns (bool) {}
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 
-    function frozenBalanceOf(address) public returns (uint256) {}
-
-    function issueMulti(
-        address[],
-        uint256[],
-        uint256,
-        uint256
-    ) public returns (bool) {}
-
-    function lockTime(address) public view returns (uint256) {}
-
-    function subscribe(
-        address,
-        address,
-        address,
-        uint256,
-        uint256
-    ) public returns (uint256) {}
-
-    function charge(uint256) public returns (bool) {}
-
-    function subscribeToSpp(
-        address,
-        uint256,
-        uint256,
-        address,
-        address
-    ) public returns (uint256) {}
-
-    function closeSpp(uint256) public returns (bool) {}
-
-    function getSppIdFromHash(bytes32) public returns (uint256) {}
-
-    function setLastPaidAt(bytes32) public returns (bool) {}
-
-    function setRemainingToBeFulfilled(bytes32, uint256)
-        public
-        returns (bool)
-    {}
-
-    function getRemainingToBeFulfilledByHash(bytes32)
-        public
-        returns (uint256)
-    {}
-
-    function getlistOfSubscriptions(address) public view returns (uint256[]) {}
-
-    function getlistOfSppSubscriptions(address)
-        public
-        view
-        returns (uint256[])
-    {}
-
-    function getcurrentTokenAmounts(uint256)
-        public
-        view
-        returns (uint256[2] memory)
-    {}
-
-    function getTokenStats(uint256) public view returns (address[2] memory) {}
-
-    function setcurrentTokenStats(
-        bytes32,
-        uint256,
-        uint256
-    ) public returns (bool) {}
-
-    function getRemainingToBeFulfilledBySppID(uint256)
-        public
-        view
-        returns (uint256)
-    {}
-}
-
-contract BNSToken is Token {
-    using SafeMath for uint256;
-
-    event Subscribe(
-        uint256 indexed orderId,
-        address indexed merchantAddress,
-        address indexed customerAddress,
-        address token,
-        uint256 value,
-        uint256 period
-    );
-    event Charge(uint256 orderId);
-    event SubscribeToSpp(
-        uint256 indexed sppID,
-        address indexed customerAddress,
-        uint256 value,
-        uint256 period,
-        address indexed tokenGet,
-        address tokenGive
-    );
-    event ChargeSpp(uint256 sppID, uint256 expires, uint256 nonce);
-    event Deposit(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint256 balance
-    );
-    event Withdraw(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint256 balance
-    );
-    event CloseSpp(uint256 sppID);
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-    event Mint(string hash, address indexed account, uint256 value);
-    event SetCurrentTokenStats(
-        uint256 indexed sppID,
-        uint256 amountGotten,
-        uint256 amountGiven
-    );
 
-    modifier _ownerOnly() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier _tradeEngineOnly() {
-        require(msg.sender == TradeEngineAddress);
-        _;
-    }
-
-    bool public scLock = false;
-
-    modifier _ifNotLocked() {
-        require(scLock == false);
-        _;
-    }
-
-    function setLock() public _ownerOnly {
-        scLock = !scLock;
-    }
-
-    function changeOwner(address owner_) public _ownerOnly {
-        potentialAdmin = owner_;
-    }
-
-    function becomeOwner() public {
-        if (potentialAdmin == msg.sender) owner = msg.sender;
-    }
-
-    function mint(
-        string hash,
-        address account,
-        uint256 value
-    ) public _ownerOnly {
-        require(account != address(0));
-        require(
-            SafeMath.add(totalSupply, value) <= totalPossibleSupply,
-            "totalSupply can't be more than the totalPossibleSupply"
-        );
-        totalSupply = SafeMath.add(totalSupply, value);
-        balances[account] = SafeMath.add(balances[account], value);
-        emit Mint(hash, account, value);
-    }
-
-    function burn(uint256 value) public _ownerOnly {
-        totalSupply = totalSupply.sub(value);
-        balances[msg.sender] = balances[msg.sender].sub(value);
-        emit Transfer(msg.sender, address(0), value);
-    }
-
-    function transfer(address _to, uint256 _value)
-        public
-        returns (bool success)
-    {
-        if (
-            balances[msg.sender] >= _value &&
-            _value >= 0 &&
-            userdata[msg.sender].exists == false
-        ) {
-            balances[msg.sender] = balances[msg.sender].sub(_value);
-            balances[_to] = balances[_to].add(_value);
-            emit Transfer(msg.sender, _to, _value);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function issueMulti(
-        address[] _to,
-        uint256[] _value,
-        uint256 ldays,
-        uint256 period
-    ) public _ownerOnly returns (bool success) {
-        require(_value.length <= 20, "too long array");
-        require(_value.length == _to.length, "array size misatch");
-        uint256 sum = 0;
-        userstats memory _oldData;
-        uint256 _oldFrozen = 0;
-        for (uint256 i = 0; i < _value.length; i++) {
-            sum = sum.add(_value[i]);
-        }
-        if (balances[msg.sender] >= sum && sum > 0) {
-            balances[msg.sender] = balances[msg.sender].sub(sum);
-            for (uint256 j = 0; j < _to.length; j++) {
-                balances[_to[j]] = balances[_to[j]].add(_value[j]);
-                _oldData = userdata[_to[j]];
-                _oldFrozen = _oldData.frozen_balance;
-
-                userdata[_to[j]] = userstats({
-                    exists: true,
-                    frozen_balance: _oldFrozen.add(_value[j]),
-                    lock_till: now.add((ldays.mul(86400))),
-                    time_period: (period.mul(86400)),
-                    per_tp_release_amt: SafeMath.div(
-                        SafeMath.add(_value[j], _oldFrozen),
-                        (ldays.div(period))
-                    )
-                });
-                emit Transfer(msg.sender, _to[j], _value[j]);
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _value
-    ) public returns (bool success) {
-        if (
-            balances[_from] >= _value &&
-            _value >= 0 &&
-            (allowed[_from][msg.sender] >= _value || _from == msg.sender)
-        ) {
-            userstats memory _userData = userdata[_from];
-
-            if (_userData.exists == false) {
-                _transfer(_from, _to, _value);
-                return true;
-            }
-
-            uint256 lock = _userData.lock_till;
-
-            if (now >= lock) {
-                _userData.frozen_balance = 0;
-                _userData.exists = false;
-                userdata[_from] = _userData;
-                _transfer(_from, _to, _value);
-                return true;
-            }
-
-            uint256 a = (lock - now);
-            uint256 b = _userData.time_period;
-            uint256 should_be_frozen = SafeMath.mul(
-                (SafeMath.div(a, b) + 1),
-                _userData.per_tp_release_amt
-            );
-
-            if (_userData.frozen_balance > should_be_frozen) {
-                _userData.frozen_balance = should_be_frozen;
-                userdata[_from] = _userData;
-            }
-
-            if (balances[_from].sub(_value) >= _userData.frozen_balance) {
-                _transfer(_from, _to, _value);
-                return true;
-            }
-
-            return false;
-        } else {
-            return false;
-        }
-    }
-
-    function _transfer(
-        address _from,
-        address _to,
-        uint256 _value
-    ) internal {
-        balances[_to] = balances[_to].add(_value);
-        if (_from != msg.sender)
-            allowed[_from][msg.sender] = SafeMath.sub(
-                allowed[_from][msg.sender],
-                _value
-            );
-        balances[_from] = balances[_from].sub(_value);
-        emit Transfer(_from, _to, _value);
-    }
-
-    function balanceOf(address _from) public view returns (uint256 balance) {
-        return balances[_from];
-    }
-
-    function frozenBalanceOf(address _from) public returns (uint256 balance) {
-        userstats memory _userData = userdata[_from];
-        if (_userData.exists == false) return;
-
-        uint256 lock = _userData.lock_till;
-
-        if (now >= lock) {
-            _userData.frozen_balance = 0;
-            _userData.exists = false;
-            userdata[_from] = _userData;
-            return 0;
-        }
-
-        uint256 a = (lock - now);
-        uint256 b = _userData.time_period;
-        uint256 should_be_frozen = SafeMath.mul(
-            (SafeMath.div(a, b) + 1),
-            _userData.per_tp_release_amt
-        );
-
-        if (_userData.frozen_balance > should_be_frozen) {
-            _userData.frozen_balance = should_be_frozen;
-            userdata[_from] = _userData;
-        }
-
-        return _userData.frozen_balance;
-    }
-
-    function lockTime(address _from) public view returns (uint256 time) {
-        if (userdata[_from].exists == false) revert();
-        return userdata[_from].lock_till;
-    }
-
-    function deposit() public payable {
-        tokens[0][msg.sender] = SafeMath.add(tokens[0][msg.sender], msg.value);
-        emit Deposit(0, msg.sender, msg.value, tokens[0][msg.sender]);
-    }
-
-    function withdraw(uint256 amount) public {
-        if (tokens[0][msg.sender] < amount) revert();
-        tokens[0][msg.sender] = SafeMath.sub(tokens[0][msg.sender], amount);
-        if (!msg.sender.call.value(amount)()) revert();
-        emit Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
-    }
-
-    function depositToken(address token, uint256 amount) public {
-        //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
-        if (token == 0) revert();
-        if (!Token(token).transferFrom(msg.sender, this, amount)) revert();
-        tokens[token][msg.sender] = SafeMath.add(
-            tokens[token][msg.sender],
-            amount
-        );
-        emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
-    }
-
-    function withdrawToken(address token, uint256 amount) public {
-        if (token == 0) revert();
-        if (tokens[token][msg.sender] < amount) revert();
-        tokens[token][msg.sender] = SafeMath.sub(
-            tokens[token][msg.sender],
-            amount
-        );
-        if (!Token(token).transfer(msg.sender, amount)) revert();
-        emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
-    }
-
-    function tokenBalanceOf(address token, address user)
-        public
-        view
-        returns (uint256 balance)
-    {
-        return tokens[token][user];
-    }
-
-    function subscribe(
-        address merchantAddress,
-        address customerAddress,
-        address token,
-        uint256 value,
-        uint256 period
-    ) public _ifNotLocked returns (uint256 oID) {
-        if (customerAddress != msg.sender || period < minPeriod) {
-            return 0;
-        }
-        if (tokens[token][msg.sender] >= value && value > 0) {
-            orderId += 1;
-            subscriptiondata[orderId] = subscriptionstats({
-                exists: true,
-                value: value,
-                period: period,
-                lastPaidAt: now.sub(period),
-                merchantAddress: merchantAddress,
-                customerAddress: customerAddress,
-                tokenType: token
-            });
-            subList[customerAddress].arr.push(orderId);
-            emit Subscribe(
-                orderId,
-                merchantAddress,
-                customerAddress,
-                token,
-                value,
-                period
-            );
-            return orderId;
-        }
-    }
-
-    function charge(uint256 orderId)
-        public
-        _ifNotLocked
-        returns (bool success)
-    {
-        subscriptionstats memory _orderData = subscriptiondata[orderId];
-        require(
-            _orderData.exists == true,
-            "This subscription does not exist, wrong orderId"
-        );
-        require(
-            _orderData.merchantAddress == msg.sender,
-            "You are not the real merchant"
-        );
-        require(
-            (_orderData.lastPaidAt).add(_orderData.period) <= now,
-            "charged too early"
-        );
-        address token = _orderData.tokenType;
-        tokens[token][_orderData.customerAddress] = tokens[token][_orderData
-            .customerAddress]
-            .sub(_orderData.value);
-        uint256 fee = ((_orderData.value).mul(25)).div(10000);
-        tokens[token][feeAccount] = SafeMath.add(
-            tokens[token][feeAccount],
-            fee
-        );
-        tokens[token][_orderData.merchantAddress] = tokens[token][_orderData
-            .merchantAddress]
-            .add((_orderData.value.sub(fee)));
-        _orderData.lastPaidAt = SafeMath.add(
-            _orderData.lastPaidAt,
-            _orderData.period
-        );
-        subscriptiondata[orderId] = _orderData;
-        emit Charge(orderId);
-        return true;
-    }
-
-    function closeSubscription(uint256 orderId) public returns (bool success) {
-        subscriptionstats memory _orderData = subscriptiondata[orderId];
-        require(
-            _orderData.exists == true,
-            "This subscription does not exist, wrong orderId OR already closed"
-        );
-        require(
-            _orderData.customerAddress == msg.sender,
-            "You are not the customer of this orderId"
-        );
-        subscriptiondata[orderId].exists = false;
-        return true;
-    }
-
-    function subscribeToSpp(
-        address customerAddress,
-        uint256 value,
-        uint256 period,
-        address tokenGet,
-        address tokenGive
-    ) public _ifNotLocked returns (uint256 sID) {
-        if (customerAddress != msg.sender || period < 86400) {
-            return 0;
-        }
-        if (
-            TradeEngine(TradeEngineAddress).balanceOf(
-                tokenGive,
-                customerAddress
-            ) >= value
-        ) {
-            require(
-                TradeEngine(TradeEngineAddress).deductFee(
-                    customerAddress,
-                    usdt,
-                    uint256(2 * (10**usdtDecimal))
-                ),
-                "fee not able to charge"
-            );
-            sppID += 1;
-            sppSubscriptionStats[sppID] = sppSubscribers({
-                exists: true,
-                customerAddress: customerAddress,
-                tokenGet: tokenGet,
-                tokenGive: tokenGive,
-                value: value,
-                remainingToBeFulfilled: value,
-                period: period,
-                lastPaidAt: now - period
-            });
-            tokenStats[sppID] = currentTokenStats({
-                TokenToGet: tokenGet,
-                TokenToGive: tokenGive,
-                amountGotten: 0,
-                amountGiven: 0
-            });
-            sppSubList[customerAddress].arr.push(sppID);
-            emit SubscribeToSpp(
-                sppID,
-                customerAddress,
-                value,
-                period,
-                tokenGet,
-                tokenGive
-            );
-            return sppID;
-        }
-    }
-
-    function chargeSpp(
-        uint256 sppID,
-        uint256 amountGet,
-        uint256 amountGive,
-        uint256 expires
-    ) public _ownerOnly _ifNotLocked {
-        sppSubscribers memory _subscriptionData = sppSubscriptionStats[sppID];
-        require(
-            amountGive == _subscriptionData.remainingToBeFulfilled,
-            "check"
-        );
-        require(
-            onGoing[sppID] < block.number,
-            "chargeSpp is already onGoing for this sppId"
-        );
-        require(
-            _subscriptionData.exists == true,
-            "This SPP does not exist, wrong SPP ID"
-        );
-        require(
-            _subscriptionData.lastPaidAt + _subscriptionData.period <= now,
-            "Charged too early"
-        );
-        require(
-            TradeEngine(TradeEngineAddress).deductFee(
-                _subscriptionData.customerAddress,
-                usdt,
-                uint256(2 * rateTrxUsdt)
-            ),
-            "fee unable to charge"
-        ); // need to multiply with 10^8??
-        nonce += 1;
-        bytes32 hash = sha256(
-            abi.encodePacked(
-                TradeEngineAddress,
-                _subscriptionData.tokenGet,
-                amountGet,
-                _subscriptionData.tokenGive,
-                amountGive,
-                block.number + expires,
-                nonce
-            )
-        );
-        hash2sppId[hash] = sppID;
-        onGoing[sppID] = block.number + expires;
-        TradeEngine(TradeEngineAddress).orderBNS(
-            _subscriptionData.tokenGet,
-            amountGet,
-            _subscriptionData.tokenGive,
-            amountGive,
-            block.number + expires,
-            nonce,
-            _subscriptionData.customerAddress
-        );
-        emit ChargeSpp(sppID, (block.number + expires), nonce);
-    }
-
-    function closeSpp(uint256 sppID) public returns (bool success) {
-        if (msg.sender != sppSubscriptionStats[sppID].customerAddress)
-            return false;
-        sppSubscriptionStats[sppID].exists = false;
-        emit CloseSpp(sppID);
-        return true;
-    }
-
-    function setrateTrxUsdt(uint256 _value) public _ownerOnly {
-        rateTrxUsdt = _value;
-    }
-
-    function setAddresses(address usdt1, address feeAccount1)
-        public
-        _ownerOnly
-    {
-        usdt = usdt1;
-        feeAccount = feeAccount1;
-    }
-
-    function setUsdtDecimal(uint256 decimal) public _ownerOnly {
-        usdtDecimal = decimal;
-    }
-
-    function setMinPeriod(uint256 p) public _ownerOnly {
-        minPeriod = p;
-    }
-
-    function setTradeEngineAddress(address _add) public _ownerOnly {
-        TradeEngineAddress = _add;
-    }
-
-    function setLastPaidAt(bytes32 hash) public returns (bool success) {
-        if (msg.sender != TradeEngineAddress) return false;
-        uint256 sppID = hash2sppId[hash];
-        sppSubscribers memory _subscriptionData = sppSubscriptionStats[sppID];
-        if (
-            (now - (_subscriptionData.lastPaidAt + _subscriptionData.period)) <
-            14400
-        ) {
-            sppSubscriptionStats[hash2sppId[hash]]
-                .lastPaidAt = _subscriptionData.lastPaidAt.add(
-                _subscriptionData.period
-            );
-        } else {
-            sppSubscriptionStats[hash2sppId[hash]].lastPaidAt = now;
-        }
-        return true;
-    }
-
-    function setRemainingToBeFulfilled(bytes32 hash, uint256 amt)
-        public
-        returns (bool success)
-    {
-        if (msg.sender != TradeEngineAddress) return false;
-        uint256 sppID = hash2sppId[hash];
-        sppSubscribers memory _subscriptionData = sppSubscriptionStats[sppID];
-        if ((_subscriptionData.remainingToBeFulfilled == amt))
-            sppSubscriptionStats[hash2sppId[hash]]
-                .remainingToBeFulfilled = _subscriptionData.value;
-        else {
-            sppSubscriptionStats[hash2sppId[hash]]
-                .remainingToBeFulfilled = _subscriptionData
-                .remainingToBeFulfilled
-                .sub(amt);
-        }
-        return true;
-    }
-
-    function setcurrentTokenStats(
-        bytes32 hash,
-        uint256 amountGotten,
-        uint256 amountGiven
-    ) public returns (bool success) {
-        if (msg.sender != TradeEngineAddress) return false;
-        uint256 sppID = hash2sppId[hash];
-        currentTokenStats memory _tokenStats = tokenStats[sppID];
-        tokenStats[sppID].amountGotten = _tokenStats.amountGotten.add(
-            amountGotten
-        );
-        tokenStats[sppID].amountGiven = _tokenStats.amountGiven.add(
-            amountGiven
-        );
-        emit SetCurrentTokenStats(sppID, amountGotten, amountGiven);
-        return true;
-    }
-
-    function isActiveSpp(uint256 sppID) public view returns (bool res) {
-        return sppSubscriptionStats[sppID].exists;
-    }
-
-    function getSppIdFromHash(bytes32 hash) public returns (uint256 sppID) {
-        return hash2sppId[hash];
-    }
-
-    function getLatestOrderId() public view returns (uint256 oId) {
-        return orderId;
-    }
-
-    function getRemainingToBeFulfilledByHash(bytes32 hash)
-        public
-        _tradeEngineOnly
-        returns (uint256 res)
-    {
-        return sppSubscriptionStats[hash2sppId[hash]].remainingToBeFulfilled;
-    }
-
-    function getRemainingToBeFulfilledBySppID(uint256 sppID)
-        public
-        view
-        returns (uint256 res)
-    {
-        return sppSubscriptionStats[sppID].remainingToBeFulfilled;
-    }
-
-    function getlistOfSubscriptions(address _from)
-        public
-        view
-        returns (uint256[] arr)
-    {
-        return subList[_from].arr;
-    }
-
-    function getlistOfSppSubscriptions(address _from)
-        public
-        view
-        returns (uint256[] arr)
-    {
-        return sppSubList[_from].arr;
-    }
-
-    function getcurrentTokenAmounts(uint256 sppID)
-        public
-        view
-        returns (uint256[2] memory arr)
-    {
-        arr[0] = tokenStats[sppID].amountGotten;
-        arr[1] = tokenStats[sppID].amountGiven;
-        return arr;
-    }
-
-    function getTokenStats(uint256 sppID)
-        public
-        view
-        returns (address[2] memory arr)
-    {
-        arr[0] = tokenStats[sppID].TokenToGet;
-        arr[1] = tokenStats[sppID].TokenToGive;
-        return arr;
-    }
-
-    function getLatestSppId() public view returns (uint256 sppId) {
-        return sppID;
-    }
-
-    function getTimeRemainingToCharge(uint256 sppID)
-        public
-        view
-        returns (uint256 time)
-    {
-        return ((sppSubscriptionStats[sppID].lastPaidAt +
-            sppSubscriptionStats[sppID].period) - now);
-    }
-
-    struct sppSubscribers {
-        bool exists;
-        address customerAddress;
-        address tokenGive;
-        address tokenGet;
-        uint256 value;
-        uint256 period;
-        uint256 lastPaidAt;
-        uint256 remainingToBeFulfilled;
-    }
-
-    struct currentTokenStats {
-        address TokenToGet;
-        uint256 amountGotten;
-        address TokenToGive;
-        uint256 amountGiven;
-    }
-
-    struct listOfSubscriptions {
-        uint256[] arr;
-    }
-
-    struct listOfSppByAddress {
-        uint256[] arr;
-    }
-
-    mapping(uint256 => currentTokenStats) tokenStats;
-    mapping(address => listOfSppByAddress) sppSubList;
-    mapping(address => listOfSubscriptions) subList;
-    mapping(bytes32 => uint256) public hash2sppId;
-    mapping(uint256 => uint256) public onGoing;
-    mapping(uint256 => sppSubscribers) public sppSubscriptionStats;
-    mapping(address => mapping(address => uint256)) internal allowed;
-    mapping(address => mapping(address => uint256)) public tokens;
-    mapping(address => userstats) public userdata;
-    mapping(address => uint256) public balances;
-    mapping(uint256 => subscriptionstats) public subscriptiondata;
-
-    struct userstats {
-        uint256 per_tp_release_amt;
-        uint256 time_period;
-        uint256 frozen_balance;
-        uint256 lock_till;
-        bool exists;
-    }
-
-    struct subscriptionstats {
-        uint256 value;
-        uint256 period;
-        uint256 lastPaidAt;
-        address merchantAddress;
-        address customerAddress;
-        address tokenType;
-        bool exists;
-    }
-
-    uint256 public totalSupply;
-    uint256 public totalPossibleSupply;
-    uint256 public orderId;
-    address public owner;
-    address private potentialAdmin;
-    address public TradeEngineAddress;
-    uint256 sppID;
-    address public usdt;
-    uint256 public usdtDecimal;
-    uint256 public rateTrxUsdt;
-    uint256 nonce;
-    address public feeAccount;
-    uint256 public minPeriod;
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract CoinBNS is BNSToken {
-    function() public {
-        revert();
+
+// File @openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol@v4.3.2
+
+
+
+pragma solidity ^0.8.4;
+
+/**
+ * @dev Interface for the optional metadata functions from the ERC20 standard.
+ *
+ * _Available since v4.1._
+ */
+interface IERC20Metadata is IERC20 {
+    /**
+     * @dev Returns the name of the token.
+     */
+    function name() external view returns (string memory);
+
+    /**
+     * @dev Returns the symbol of the token.
+     */
+    function symbol() external view returns (string memory);
+
+    /**
+     * @dev Returns the decimals places of the token.
+     */
+    function decimals() external view returns (uint8);
+}
+
+
+// File @openzeppelin/contracts/utils/Context.sol@v4.3.2
+
+
+
+pragma solidity ^0.8.4;
+
+/**
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
     }
 
-    string public name;
-    uint8 public decimals;
-    string public symbol;
-    string public version = "H1.0";
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
+    }
+}
 
-    constructor() public {
-        owner = msg.sender;
-        balances[msg.sender] = 250000000000000000;
-        totalSupply = 250000000000000000;
-        totalPossibleSupply = 250000000000000000;
-        name = "BNS Token";
-        decimals = 8;
-        symbol = "BNS";
+
+// File @openzeppelin/contracts/token/ERC20/ERC20.sol@v4.3.2
+
+
+
+pragma solidity ^0.8.4;
+
+
+
+/**
+ * @dev Implementation of the {IERC20} interface.
+ *
+ * This implementation is agnostic to the way tokens are created. This means
+ * that a supply mechanism has to be added in a derived contract using {_mint}.
+ * For a generic mechanism see {ERC20PresetMinterPauser}.
+ *
+ * TIP: For a detailed writeup see our guide
+ * https://forum.zeppelin.solutions/t/how-to-implement-erc20-supply-mechanisms/226[How
+ * to implement supply mechanisms].
+ *
+ * We have followed general OpenZeppelin Contracts guidelines: functions revert
+ * instead returning `false` on failure. This behavior is nonetheless
+ * conventional and does not conflict with the expectations of ERC20
+ * applications.
+ *
+ * Additionally, an {Approval} event is emitted on calls to {transferFrom}.
+ * This allows applications to reconstruct the allowance for all accounts just
+ * by listening to said events. Other implementations of the EIP may not emit
+ * these events, as it isn't required by the specification.
+ *
+ * Finally, the non-standard {decreaseAllowance} and {increaseAllowance}
+ * functions have been added to mitigate the well-known issues around setting
+ * allowances. See {IERC20-approve}.
+ */
+contract ERC20 is Context, IERC20, IERC20Metadata {
+    mapping(address => uint256) private _balances;
+
+    mapping(address => mapping(address => uint256)) private _allowances;
+
+    uint256 private _totalSupply;
+
+    string private _name;
+    string private _symbol;
+
+    /**
+     * @dev Sets the values for {name} and {symbol}.
+     *
+     * The default value of {decimals} is 18. To select a different value for
+     * {decimals} you should overload it.
+     *
+     * All two of these values are immutable: they can only be set once during
+     * construction.
+     */
+    constructor(string memory name_, string memory symbol_) {
+        _name = name_;
+        _symbol = symbol_;
+    }
+
+    /**
+     * @dev Returns the name of the token.
+     */
+    function name() public view virtual override returns (string memory) {
+        return _name;
+    }
+
+    /**
+     * @dev Returns the symbol of the token, usually a shorter version of the
+     * name.
+     */
+    function symbol() public view virtual override returns (string memory) {
+        return _symbol;
+    }
+
+    /**
+     * @dev Returns the number of decimals used to get its user representation.
+     * For example, if `decimals` equals `2`, a balance of `505` tokens should
+     * be displayed to a user as `5.05` (`505 / 10 ** 2`).
+     *
+     * Tokens usually opt for a value of 18, imitating the relationship between
+     * Ether and Wei. This is the value {ERC20} uses, unless this function is
+     * overridden;
+     *
+     * NOTE: This information is only used for _display_ purposes: it in
+     * no way affects any of the arithmetic of the contract, including
+     * {IERC20-balanceOf} and {IERC20-transfer}.
+     */
+    function decimals() public view virtual override returns (uint8) {
+        return 8;
+    }
+
+    /**
+     * @dev See {IERC20-totalSupply}.
+     */
+    function totalSupply() public view virtual override returns (uint256) {
+        return _totalSupply;
+    }
+
+    /**
+     * @dev See {IERC20-balanceOf}.
+     */
+    function balanceOf(address account) public view virtual override returns (uint256) {
+        return _balances[account];
+    }
+
+    /**
+     * @dev See {IERC20-transfer}.
+     *
+     * Requirements:
+     *
+     * - `recipient` cannot be the zero address.
+     * - the caller must have a balance of at least `amount`.
+     */
+    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+        _transfer(_msgSender(), recipient, amount);
+        return true;
+    }
+
+    /**
+     * @dev See {IERC20-allowance}.
+     */
+    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+        return _allowances[owner][spender];
+    }
+
+    /**
+     * @dev See {IERC20-approve}.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+        _approve(_msgSender(), spender, amount);
+        return true;
+    }
+
+    /**
+     * @dev See {IERC20-transferFrom}.
+     *
+     * Emits an {Approval} event indicating the updated allowance. This is not
+     * required by the EIP. See the note at the beginning of {ERC20}.
+     *
+     * Requirements:
+     *
+     * - `sender` and `recipient` cannot be the zero address.
+     * - `sender` must have a balance of at least `amount`.
+     * - the caller must have allowance for ``sender``'s tokens of at least
+     * `amount`.
+     */
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public virtual override returns (bool) {
+        _transfer(sender, recipient, amount);
+
+        uint256 currentAllowance = _allowances[sender][_msgSender()];
+        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
+        unchecked {
+            _approve(sender, _msgSender(), currentAllowance - amount);
+        }
+
+        return true;
+    }
+
+    /**
+     * @dev Atomically increases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
+    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+        _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
+        return true;
+    }
+
+    /**
+     * @dev Atomically decreases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     * - `spender` must have allowance for the caller of at least
+     * `subtractedValue`.
+     */
+    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+        uint256 currentAllowance = _allowances[_msgSender()][spender];
+        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
+        unchecked {
+            _approve(_msgSender(), spender, currentAllowance - subtractedValue);
+        }
+
+        return true;
+    }
+
+    /**
+     * @dev Moves `amount` of tokens from `sender` to `recipient`.
+     *
+     * This internal function is equivalent to {transfer}, and can be used to
+     * e.g. implement automatic token fees, slashing mechanisms, etc.
+     *
+     * Emits a {Transfer} event.
+     *
+     * Requirements:
+     *
+     * - `sender` cannot be the zero address.
+     * - `recipient` cannot be the zero address.
+     * - `sender` must have a balance of at least `amount`.
+     */
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal virtual {
+        require(sender != address(0), "ERC20: transfer from the zero address");
+        require(recipient != address(0), "ERC20: transfer to the zero address");
+
+        _beforeTokenTransfer(sender, recipient, amount);
+
+        uint256 senderBalance = _balances[sender];
+        require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
+        unchecked {
+            _balances[sender] = senderBalance - amount;
+        }
+        _balances[recipient] += amount;
+
+        emit Transfer(sender, recipient, amount);
+
+        _afterTokenTransfer(sender, recipient, amount);
+    }
+
+    /** @dev Creates `amount` tokens and assigns them to `account`, increasing
+     * the total supply.
+     *
+     * Emits a {Transfer} event with `from` set to the zero address.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
+     */
+    function _mint(address account, uint256 amount) internal virtual {
+        require(account != address(0), "ERC20: mint to the zero address");
+
+        _beforeTokenTransfer(address(0), account, amount);
+
+        _totalSupply += amount;
+        _balances[account] += amount;
+        emit Transfer(address(0), account, amount);
+
+        _afterTokenTransfer(address(0), account, amount);
+    }
+
+    /**
+     * @dev Destroys `amount` tokens from `account`, reducing the
+     * total supply.
+     *
+     * Emits a {Transfer} event with `to` set to the zero address.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
+     * - `account` must have at least `amount` tokens.
+     */
+    function _burn(address account, uint256 amount) internal virtual {
+        require(account != address(0), "ERC20: burn from the zero address");
+
+        _beforeTokenTransfer(account, address(0), amount);
+
+        uint256 accountBalance = _balances[account];
+        require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
+        unchecked {
+            _balances[account] = accountBalance - amount;
+        }
+        _totalSupply -= amount;
+
+        emit Transfer(account, address(0), amount);
+
+        _afterTokenTransfer(account, address(0), amount);
+    }
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
+     *
+     * This internal function is equivalent to `approve`, and can be used to
+     * e.g. set automatic allowances for certain subsystems, etc.
+     *
+     * Emits an {Approval} event.
+     *
+     * Requirements:
+     *
+     * - `owner` cannot be the zero address.
+     * - `spender` cannot be the zero address.
+     */
+    function _approve(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal virtual {
+        require(owner != address(0), "ERC20: approve from the zero address");
+        require(spender != address(0), "ERC20: approve to the zero address");
+
+        _allowances[owner][spender] = amount;
+        emit Approval(owner, spender, amount);
+    }
+
+    /**
+     * @dev Hook that is called before any transfer of tokens. This includes
+     * minting and burning.
+     *
+     * Calling conditions:
+     *
+     * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens
+     * will be transferred to `to`.
+     * - when `from` is zero, `amount` tokens will be minted for `to`.
+     * - when `to` is zero, `amount` of ``from``'s tokens will be burned.
+     * - `from` and `to` are never both zero.
+     *
+     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+     */
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {}
+
+    /**
+     * @dev Hook that is called after any transfer of tokens. This includes
+     * minting and burning.
+     *
+     * Calling conditions:
+     *
+     * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens
+     * has been transferred to `to`.
+     * - when `from` is zero, `amount` tokens have been minted for `to`.
+     * - when `to` is zero, `amount` of ``from``'s tokens have been burned.
+     * - `from` and `to` are never both zero.
+     *
+     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+     */
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {}
+}
+
+
+// File @openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol@v4.3.2
+
+
+
+pragma solidity ^0.8.4;
+
+
+/**
+ * @dev Extension of {ERC20} that allows token holders to destroy both their own
+ * tokens and those that they have an allowance for, in a way that can be
+ * recognized off-chain (via event analysis).
+ */
+abstract contract ERC20Burnable is Context, ERC20 {
+    /**
+     * @dev Destroys `amount` tokens from the caller.
+     *
+     * See {ERC20-_burn}.
+     */
+    function burn(uint256 amount) public virtual {
+        _burn(_msgSender(), amount);
+    }
+
+    /**
+     * @dev Destroys `amount` tokens from `account`, deducting from the caller's
+     * allowance.
+     *
+     * See {ERC20-_burn} and {ERC20-allowance}.
+     *
+     * Requirements:
+     *
+     * - the caller must have allowance for ``accounts``'s tokens of at least
+     * `amount`.
+     */
+    function burnFrom(address account, uint256 amount) public virtual {
+        uint256 currentAllowance = allowance(account, _msgSender());
+        require(currentAllowance >= amount, "ERC20: burn amount exceeds allowance");
+        unchecked {
+            _approve(account, _msgSender(), currentAllowance - amount);
+        }
+        _burn(account, amount);
+    }
+}
+
+
+// File @openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol@v4.3.2
+
+
+
+pragma solidity ^0.8.4;
+
+/**
+ * @dev Extension of {ERC20} that adds a cap to the supply of tokens.
+ */
+abstract contract ERC20Capped is ERC20 {
+    uint256 private immutable _cap;
+
+    /**
+     * @dev Sets the value of the `cap`. This value is immutable, it can only be
+     * set once during construction.
+     */
+    constructor(uint256 cap_) {
+        require(cap_ > 0, "ERC20Capped: cap is 0");
+        _cap = cap_;
+    }
+
+    /**
+     * @dev Returns the cap on the token's total supply.
+     */
+    function cap() public view virtual returns (uint256) {
+        return _cap;
+    }
+
+    /**
+     * @dev See {ERC20-_mint}.
+     */
+    function _mint(address account, uint256 amount) internal virtual override {
+        require(ERC20.totalSupply() + amount <= cap(), "ERC20Capped: cap exceeded");
+        super._mint(account, amount);
+    }
+}
+
+
+// File @openzeppelin/contracts/security/Pausable.sol@v4.3.2
+
+
+
+pragma solidity ^0.8.4;
+
+/**
+ * @dev Contract module which allows children to implement an emergency stop
+ * mechanism that can be triggered by an authorized account.
+ *
+ * This module is used through inheritance. It will make available the
+ * modifiers `whenNotPaused` and `whenPaused`, which can be applied to
+ * the functions of your contract. Note that they will not be pausable by
+ * simply including this module, only once the modifiers are put in place.
+ */
+abstract contract Pausable is Context {
+    /**
+     * @dev Emitted when the pause is triggered by `account`.
+     */
+    event Paused(address account);
+
+    /**
+     * @dev Emitted when the pause is lifted by `account`.
+     */
+    event Unpaused(address account);
+
+    bool private _paused;
+
+    /**
+     * @dev Initializes the contract in unpaused state.
+     */
+    constructor() {
+        _paused = false;
+    }
+
+    /**
+     * @dev Returns true if the contract is paused, and false otherwise.
+     */
+    function paused() public view virtual returns (bool) {
+        return _paused;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused(), "Pausable: paused");
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    modifier whenPaused() {
+        require(paused(), "Pausable: not paused");
+        _;
+    }
+
+    /**
+     * @dev Triggers stopped state.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    function _pause() internal virtual whenNotPaused {
+        _paused = true;
+        emit Paused(_msgSender());
+    }
+
+    /**
+     * @dev Returns to normal state.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    function _unpause() internal virtual whenPaused {
+        _paused = false;
+        emit Unpaused(_msgSender());
+    }
+}
+
+
+// File @openzeppelin/contracts/access/Ownable.sol@v4.3.2
+
+
+
+pragma solidity ^0.8.4;
+
+/**
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+ *
+ * By default, the owner account will be the one that deploys the contract. This
+ * can later be changed with {transferOwnership}.
+ *
+ * This module is used through inheritance. It will make available the modifier
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
+ */
+abstract contract Ownable is Context {
+    address private _owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev Initializes the contract setting the deployer as the initial owner.
+     */
+    constructor() {
+        _setOwner(_msgSender());
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view virtual returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+        _;
+    }
+
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        _setOwner(address(0));
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        _setOwner(newOwner);
+    }
+
+    function _setOwner(address newOwner) private {
+        address oldOwner = _owner;
+        _owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+}
+
+
+// File contracts/BNSERC.sol
+
+
+pragma solidity ^0.8.4;
+
+
+
+
+
+contract BNSERC is ERC20, ERC20Capped, ERC20Burnable, Pausable, Ownable {
+    constructor()
+    ERC20("Bitbns Token", "BNS")
+    ERC20Capped(250000000000*10**decimals()) {
+
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return 8;
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal
+        whenNotPaused
+        override
+    {
+        super._beforeTokenTransfer(from, to, amount);
+    }
+
+    // The following functions are overrides required by Solidity.
+
+    function _afterTokenTransfer(address from, address to, uint256 amount)
+        internal
+        override(ERC20)
+    {
+        super._afterTokenTransfer(from, to, amount);
+    }
+
+    function _mint(address to, uint256 amount)
+        internal
+        override(ERC20, ERC20Capped)
+    {
+        super._mint(to, amount);
+    }
+
+    function _burn(address account, uint256 amount)
+        internal
+        override(ERC20)
+    {
+        super._burn(account, amount);
     }
 }
